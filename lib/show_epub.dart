@@ -57,6 +57,7 @@ class ShowEpub extends StatefulWidget {
   final Function(int currentPage, int totalPages)? onPageFlip;
   final Function(int lastPageIndex)? onLastPage;
   final Color accentColor;
+  final VoidCallback? onBack;
 
   ShowEpub({
     super.key,
@@ -68,6 +69,7 @@ class ShowEpub extends StatefulWidget {
     required this.chapterListTitle,
     this.onPageFlip,
     this.onLastPage,
+    this.onBack,
   });
 
   @override
@@ -843,14 +845,32 @@ class ShowEpubState extends State<ShowEpub> {
                                     color: widget.accentColor, width: 3.h)),
                             elevation: 0,
                             leading: IconButton(
-                              onPressed: openTableOfContents,
+                              key: const Key('back_button'),
+                              onPressed: () {
+                                if (widget.onBack != null) {
+                                  widget.onBack!();
+                                } else {
+                                  Navigator.pop(context);
+                                }
+                              },
                               icon: Icon(
-                                Icons.menu,
+                                Platform.isIOS || Platform.isMacOS
+                                    ? Icons.arrow_back_ios
+                                    : Icons.arrow_back,
                                 color: fontColor,
                                 size: 20.h,
                               ),
                             ),
                             actions: [
+                              IconButton(
+                                key: const Key('toc_button'),
+                                onPressed: openTableOfContents,
+                                icon: Icon(
+                                  Icons.menu,
+                                  color: fontColor,
+                                  size: 20.h,
+                                ),
+                              ),
                               InkWell(
                                   onTap: () {
                                     updateFontSettings();
