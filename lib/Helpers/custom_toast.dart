@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class CustomToast {
   static void showToast(String text) {
-    Fluttertoast.showToast(
-      msg: text,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.black38,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
+    // fluttertoast removed for macOS compatibility; no-op without a context.
+    // Use the Snack() helper when a BuildContext is available.
   }
 }
 

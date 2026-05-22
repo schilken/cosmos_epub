@@ -13,6 +13,7 @@ class ChaptersList extends StatelessWidget {
   final Widget? leadingIcon;
   final Color accentColor;
   final String chapterListTitle;
+  final int currentChapterIndex;
 
   ChaptersList(
       {super.key,
@@ -20,7 +21,8 @@ class ChaptersList extends StatelessWidget {
       required this.bookId,
       this.leadingIcon,
       required this.accentColor,
-      required this.chapterListTitle});
+      required this.chapterListTitle,
+      this.currentChapterIndex = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -61,54 +63,52 @@ class ChaptersList extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView.builder(
-                itemCount: chapters.length,
-                physics: BouncingScrollPhysics(),
-                itemBuilder: (context, i) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        onTap: () async {
-                          await bookProgress.setCurrentChapterIndex(bookId, i);
-                          Navigator.of(context).pop(true);
-                        },
-                        leading: leadingIcon,
-                        minLeadingWidth: 20.w,
-                        title: Padding(
-                          padding: EdgeInsets.only(
-                              left: textDirection == TextDirection.ltr
-                                  ? chapters[i].depth * 15.w
-                                  : 0,
-                              right: textDirection == TextDirection.rtl
-                                  ? chapters[i].depth * 15.w
-                                  : 0),
-                          child: Text(chapters[i].chapter,
-                              textDirection: RTLHelper.getTextDirection(
-                                  chapters[i].chapter),
-                              style: TextStyle(
-                                  color: bookProgress
-                                              .getBookProgress(bookId)
-                                              .currentChapterIndex ==
-                                          i
-                                      ? accentColor
-                                      : fontColor,
-                                  fontFamily: fontNames
-                                      .where(
-                                          (element) => element == selectedFont)
-                                      .first,
-                                  package: 'cosmos_epub',
-                                  fontSize: 15.sp,
-                                  fontWeight: chapters[i].depth == 0
-                                      ? FontWeight.w600
-                                      : FontWeight.w400)),
-                        ),
-                        dense: true,
-                      ),
-                      Divider(height: 0, thickness: 1.h),
-                    ],
-                  );
-                }),
+                      itemCount: chapters.length,
+                      physics: BouncingScrollPhysics(),
+                      itemBuilder: (context, i) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              onTap: () async {
+                                await bookProgress.setCurrentChapterIndex(
+                                    bookId, i);
+                                Navigator.of(context).pop(true);
+                              },
+                              leading: leadingIcon,
+                              minLeadingWidth: 20.w,
+                              title: Padding(
+                                padding: EdgeInsets.only(
+                                    left: textDirection == TextDirection.ltr
+                                        ? chapters[i].depth * 15.w
+                                        : 0,
+                                    right: textDirection == TextDirection.rtl
+                                        ? chapters[i].depth * 15.w
+                                        : 0),
+                                child: Text(chapters[i].chapter,
+                                    textDirection: RTLHelper.getTextDirection(
+                                        chapters[i].chapter),
+                                    style: TextStyle(
+                                        color: currentChapterIndex == i
+                                            ? accentColor
+                                            : fontColor,
+                                        fontFamily: fontNames
+                                            .where((element) =>
+                                                element == selectedFont)
+                                            .first,
+                                        package: 'cosmos_epub',
+                                        fontSize: 15.sp,
+                                        fontWeight: chapters[i].depth == 0
+                                            ? FontWeight.w600
+                                            : FontWeight.w400)),
+                              ),
+                              dense: true,
+                            ),
+                            Divider(height: 0, thickness: 1.h),
+                          ],
+                        );
+                      }),
                 ),
               ],
             ),

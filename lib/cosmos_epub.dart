@@ -3,8 +3,8 @@ library cosmos_epub;
 import 'dart:io';
 
 import 'package:cosmos_epub/Component/constants.dart';
-import 'package:cosmos_epub/Helpers/isar_service.dart';
-import 'package:cosmos_epub/Helpers/progress_singleton.dart';
+import 'package:cosmos_epub/Database/app_database.dart';
+import 'package:cosmos_epub/Helpers/drift_progress_service.dart';
 import 'package:cosmos_epub/Model/book_progress_model.dart';
 import 'package:cosmos_epub/Model/highlight_model.dart';
 import 'package:cosmos_epub/show_epub.dart';
@@ -27,8 +27,8 @@ class CosmosEpub {
   /// Initialize the reader. Must be called once before opening any book.
   static Future<bool> initialize() async {
     await GetStorage.init();
-    var isar = await IsarService.buildIsarService();
-    bookProgress = BookProgressSingleton(isar: isar);
+    final db = AppDatabase();
+    bookProgress = DriftProgressService(db);
     _initialized = true;
     return true;
   }
@@ -150,8 +150,8 @@ class CosmosEpub {
   // ──── Progress Management ────
 
   /// Get the reading progress for a book.
-  static BookProgressModel getBookProgress(String bookId) {
-    return bookProgress.getBookProgress(bookId);
+  static Future<BookProgressModel> getBookProgress(String bookId) async {
+    return await bookProgress.getBookProgress(bookId);
   }
 
   /// Set the current page index for a book.
@@ -234,13 +234,14 @@ class CosmosEpub {
       await bookProgress.setCurrentPageIndex(bookId, 0);
     }
 
+    final progress = await bookProgress.getBookProgress(bookId);
     var route = MaterialPageRoute(
       builder: (context) {
         return ShowEpub(
           epubBook: epubBook,
           starterChapter: starterChapter >= 0
               ? starterChapter
-              : bookProgress.getBookProgress(bookId).currentChapterIndex ?? 0,
+              : progress.currentChapterIndex ?? 0,
           shouldOpenDrawer: shouldOpenDrawer,
           bookId: bookId,
           accentColor: accentColor,
