@@ -355,8 +355,8 @@ class ShowEpubState extends State<ShowEpub> {
                                                         : fontColor,
                                                     package: 'cosmos_epub',
                                                     fontSize: context.isTablet
-                                                        ? 10.sp
-                                                        : 15.sp,
+                                                        ? 24.sp
+                                                        : 24.sp,
                                                     fontWeight:
                                                         selectedFont == font
                                                             ? FontWeight.bold
@@ -779,7 +779,7 @@ class ShowEpubState extends State<ShowEpub> {
                                       textAlign: TextAlign.center,
                                       textDirection: currentTextDirection,
                                       style: TextStyle(
-                                          fontSize: 13.sp,
+                                          fontSize: 32.sp,
                                           overflow: TextOverflow.ellipsis,
                                           fontFamily: selectedTextStyle,
                                           package: 'cosmos_epub',
@@ -836,7 +836,7 @@ class ShowEpubState extends State<ShowEpub> {
                               textDirection: currentTextDirection,
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 16.sp,
+                                  fontSize: 32.sp,
                                   color: fontColor),
                             ),
                             backgroundColor: backColor,
@@ -881,7 +881,7 @@ class ShowEpubState extends State<ShowEpub> {
                                     child: Text(
                                       "Aa",
                                       style: TextStyle(
-                                          fontSize: 18.sp,
+                                          fontSize: 24.sp,
                                           color: fontColor,
                                           fontWeight: FontWeight.bold),
                                     ),

@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:cosmos_epub/Component/highlight_toolbar.dart';
 import 'package:cosmos_epub/Helpers/epub_content_parser.dart';
 import 'package:cosmos_epub/Helpers/html_paginator.dart';
@@ -17,15 +19,30 @@ const _shyChar = '\u00AD';
 const _vowels = 'aeiouyAEIOUYаеёиоуыэюяАЕЁИОУЫЭЮЯ';
 
 // Uzbek digraphs that must never be split
-const _uzDigraphs = ['ch', 'sh', "g'", "o'", "gʻ", "oʻ",
-                      'Ch', 'Sh', "G'", "O'", "Gʻ", "Oʻ",
-                      'CH', 'SH'];
+const _uzDigraphs = [
+  'ch',
+  'sh',
+  "g'",
+  "o'",
+  "gʻ",
+  "oʻ",
+  'Ch',
+  'Sh',
+  "G'",
+  "O'",
+  "Gʻ",
+  "Oʻ",
+  'CH',
+  'SH'
+];
 
 bool _isVowel(String c) => _vowels.contains(c);
+
 /// Get the length of digraph starting at position i, or 1 if not a digraph.
 int _charLen(String word, int i) {
   for (final dg in _uzDigraphs) {
-    if (i + dg.length <= word.length && word.substring(i, i + dg.length) == dg) {
+    if (i + dg.length <= word.length &&
+        word.substring(i, i + dg.length) == dg) {
       return dg.length;
     }
   }
@@ -320,7 +337,6 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   int _tappedParagraphEnd = -1;
   HtmlTextBuilder? _lastBuilder;
 
-
   List<Widget> _buildContent() {
     // Build once to get the page key from accumulated block text
     final tempBuilder = HtmlTextBuilder(
@@ -332,7 +348,8 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       onTextTap: widget.onTextTap,
     );
     tempBuilder.build(widget.pageHtml);
-    final pageKey = HighlightModel.makeParagraphKey(tempBuilder.lastBuiltCleanText);
+    final pageKey =
+        HighlightModel.makeParagraphKey(tempBuilder.lastBuiltCleanText);
 
     // Now build with highlights loaded using that key
     final pageHighlights = widget.bookId.isNotEmpty
@@ -378,7 +395,8 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     // Search within the tapped paragraph first (accurate for duplicate words)
     final searchText = cleanSelected.replaceAll('-', '');
     final searchStart = _tappedParagraphEnd > 0 ? _tappedParagraphStart : 0;
-    final searchEnd = _tappedParagraphEnd > 0 ? _tappedParagraphEnd : builtText.length;
+    final searchEnd =
+        _tappedParagraphEnd > 0 ? _tappedParagraphEnd : builtText.length;
     final paragraphText = builtText.substring(
         searchStart.clamp(0, builtText.length),
         searchEnd.clamp(0, builtText.length));
@@ -400,7 +418,8 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       int origPos = 0, normPos = 0;
       while (normPos < normalizedIdx && origPos < builtText.length) {
         if (RegExp(r'\s').hasMatch(builtText[origPos])) {
-          while (origPos < builtText.length && RegExp(r'\s').hasMatch(builtText[origPos])) origPos++;
+          while (origPos < builtText.length &&
+              RegExp(r'\s').hasMatch(builtText[origPos])) origPos++;
           normPos++;
         } else {
           origPos++;
@@ -459,8 +478,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       onPointerDown: (e) => _tapDownPos = e.position,
       onPointerUp: (e) {
         // Only trigger on simple taps (not drags/selections)
-        if (_tapDownPos != null &&
-            (e.position - _tapDownPos!).distance < 5) {
+        if (_tapDownPos != null && (e.position - _tapDownPos!).distance < 5) {
           widget.onTextTap();
         }
         _tapDownPos = null;
@@ -477,8 +495,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
                   .copySelection(SelectionChangedCause.toolbar);
             },
             onSelectAll: () {
-              selectableRegionState
-                  .selectAll(SelectionChangedCause.toolbar);
+              selectableRegionState.selectAll(SelectionChangedCause.toolbar);
             },
             onColorSelected: (color) {
               _addHighlight(_lastSelectedText, color);
@@ -531,11 +548,11 @@ class _PageToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AdaptiveTextSelectionToolbar(
-      anchors: anchor,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    final children = <Widget>[
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -569,13 +586,27 @@ class _PageToolbar extends StatelessWidget {
                 onTap: onSelectAll,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6),
-                  child: Icon(Icons.select_all, size: 20, color: Colors.white70),
+                  child:
+                      Icon(Icons.select_all, size: 20, color: Colors.white70),
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
+    ];
+
+    if (Platform.isMacOS || Platform.isLinux || Platform.isWindows) {
+      return TextSelectionToolbar(
+        anchorAbove: anchor.primaryAnchor,
+        anchorBelow: anchor.secondaryAnchor ?? anchor.primaryAnchor,
+        children: children,
+      );
+    }
+
+    return AdaptiveTextSelectionToolbar(
+      anchors: anchor,
+      children: children,
     );
   }
 }

@@ -98,7 +98,7 @@ class ChaptersList extends StatelessWidget {
                                                 element == selectedFont)
                                             .first,
                                         package: 'cosmos_epub',
-                                        fontSize: 15.sp,
+                                        fontSize: 32.sp,
                                         fontWeight: chapters[i].depth == 0
                                             ? FontWeight.w600
                                             : FontWeight.w400)),
