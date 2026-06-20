@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=/Users/m3pro/fvm/versions/3.38.5"
-export "FLUTTER_APPLICATION_PATH=/Users/m3pro/StudioProjects/cosmos_epub/example"
+export "FLUTTER_ROOT=/Users/aschilken/fvm/versions/3.32.4"
+export "FLUTTER_APPLICATION_PATH=/Users/aschilken/flutterdev/my_projects/cosmos_epub/7epubs"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"

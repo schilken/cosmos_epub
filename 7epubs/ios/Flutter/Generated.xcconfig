@@ -1,6 +1,6 @@
 // This is a generated file; do not edit or check into version control.
-FLUTTER_ROOT=/Users/m3pro/fvm/versions/3.38.5
-FLUTTER_APPLICATION_PATH=/Users/m3pro/StudioProjects/cosmos_epub/example
+FLUTTER_ROOT=/Users/aschilken/fvm/versions/3.32.4
+FLUTTER_APPLICATION_PATH=/Users/aschilken/flutterdev/my_projects/cosmos_epub/7epubs
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_TARGET=lib/main.dart
 FLUTTER_BUILD_DIR=build

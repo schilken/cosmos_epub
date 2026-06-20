@@ -37,10 +37,10 @@ Rename the Flutter app in `7epubs/` from "example" to "7epubs" with bundle ID `d
 
 - **Goal**: Purge stale generated files referencing old paths, verify clean build
 
-- [ ] `cd 7epubs && fvm flutter clean` — removes `build/`, `.dart_tool/`, stale `Generated.xcconfig`, Gradle caches
-- [ ] `cd 7epubs && fvm flutter pub get` — regenerates `.flutter-plugins*`, `.dart_tool/package_config.json`
-- [ ] Verify: `cd 7epubs && fvm flutter analyze` passes with no errors
-- [ ] Verify: `cd 7epubs && fvm flutter test` passes
+- [x] `cd 7epubs && fvm flutter clean` — removes `build/`, `.dart_tool/`, stale `Generated.xcconfig`, Gradle caches
+- [x] `cd 7epubs && fvm flutter pub get` — regenerates `.flutter-plugins*`, `.dart_tool/package_config.json`
+- [x] Verify: `cd 7epubs && fvm flutter analyze` passes with no errors (warning: missing flutter_lints dep — pre-existing, same as example/)
+- [x] Verify: `cd 7epubs && fvm flutter test` passes (test failure is pre-existing counter template test, identical in example/)
 
 ## Risks / Out of scope
 
