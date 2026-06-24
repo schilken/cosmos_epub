@@ -96,9 +96,6 @@ class ShowEpubState extends State<ShowEpub> {
   late String selectedTextStyle;
 
   bool showHeader = true;
-  bool isLastPage = false;
-  int lastSwipe = 0;
-  int prevSwipe = 0;
   bool showPrevious = false;
   bool showNext = false;
   int _currentChapterIndex = 0;
@@ -475,14 +472,7 @@ class ShowEpubState extends State<ShowEpub> {
     setState(() {});
   }
 
-  _resetSwipeState() {
-    lastSwipe = 0;
-    prevSwipe = 0;
-    isLastPage = false;
-  }
-
   nextChapter() async {
-    _resetSwipeState();
     await bookProgress.setCurrentPageIndex(bookId, 0);
 
     final progress = await bookProgress.getBookProgress(bookId);
@@ -494,7 +484,6 @@ class ShowEpubState extends State<ShowEpub> {
   }
 
   prevChapter() async {
-    _resetSwipeState();
     await bookProgress.setCurrentPageIndex(bookId, 0);
 
     final progress = await bookProgress.getBookProgress(bookId);
@@ -596,49 +585,17 @@ class ShowEpubState extends State<ShowEpub> {
                                                 ?.call(currentPage, totalPages);
 
                                             bookProgress.setCurrentPageIndex(
-                                                bookId,
-                                                currentPage == totalPages - 1
-                                                    ? 0
-                                                    : currentPage);
+                                                bookId, currentPage);
 
-                                            // Reset swipe counters when not on boundary pages
-                                            if (currentPage != totalPages - 1) {
-                                              lastSwipe = 0;
-                                            }
-                                            if (currentPage != 0) {
-                                              prevSwipe = 0;
-                                            }
-
-                                            isLastPage = false;
                                             updateUI();
                                           },
                                           onLastPage:
                                               (index, totalPages) async {
                                             widget.onLastPage?.call(index);
-
-                                            // For all chapters: require 2 swipes past last page
-                                            // except 1-page chapters which advance immediately
-                                            if (totalPages <= 1) {
-                                              nextChapter();
-                                            } else {
-                                              lastSwipe++;
-                                              if (lastSwipe > 1) {
-                                                nextChapter();
-                                              }
-                                            }
-
-                                            isLastPage = true;
-                                            updateUI();
+                                            nextChapter();
                                           },
                                           onFirstPageBack: (index, totalPages) {
-                                            if (totalPages <= 1) {
-                                              prevChapter();
-                                            } else {
-                                              prevSwipe++;
-                                              if (prevSwipe > 1) {
-                                                prevChapter();
-                                              }
-                                            }
+                                            prevChapter();
                                           },
                                           chapterTitle:
                                               chaptersList[currentChapterIndex]

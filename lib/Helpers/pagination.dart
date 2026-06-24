@@ -5,7 +5,6 @@ import 'package:cosmos_epub/Helpers/epub_content_parser.dart';
 import 'package:cosmos_epub/Helpers/html_paginator.dart';
 import 'package:cosmos_epub/Helpers/html_text_builder.dart';
 import 'package:cosmos_epub/Model/highlight_model.dart';
-import 'package:cosmos_epub/PageFlip/builders/builder.dart' as flip_cache;
 import 'package:cosmos_epub/PageFlip/page_flip_widget.dart';
 import 'package:cosmos_epub/Helpers/functions.dart';
 import 'package:fading_edge_scrollview/fading_edge_scrollview.dart';
@@ -384,8 +383,6 @@ class _HighlightablePageState extends State<_HighlightablePage> {
         _tappedParagraphEnd = end;
       },
       onHighlightChanged: () {
-        // Clear cached page images so flip animation shows updated highlights
-        flip_cache.imageData.clear();
         if (mounted) setState(() {});
       },
     );
