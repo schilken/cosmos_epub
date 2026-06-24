@@ -33,6 +33,7 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   int _currentPage = 0;
   late AnimationController _controller;
   bool _forward = false;
+  Offset? _tapDownPos;
 
   bool get _isLastPage => _currentPage >= _effectiveChildren.length - 1;
   bool get _isFirstPage => _currentPage == 0;
@@ -98,16 +99,22 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, dimens) => GestureDetector(
+      builder: (context, dimens) => Listener(
         behavior: HitTestBehavior.translucent,
-        onTapUp: (details) {
-          if (_controller.isAnimating) return;
-          final ratio = details.localPosition.dx / dimens.maxWidth;
-          if (ratio <= 0.2 && !_isFirstPage) {
-            previousPage();
-          } else if (ratio >= 0.8 && !_isLastPage) {
-            nextPage();
+        onPointerDown: (e) => _tapDownPos = e.localPosition,
+        onPointerUp: (e) {
+          if (_tapDownPos != null && !_controller.isAnimating) {
+            final delta = (e.localPosition - _tapDownPos!).distance;
+            if (delta < 18) {
+              final ratio = e.localPosition.dx / dimens.maxWidth;
+              if (ratio <= 0.2 && !_isFirstPage) {
+                previousPage();
+              } else if (ratio >= 0.8 && !_isLastPage) {
+                nextPage();
+              }
+            }
           }
+          _tapDownPos = null;
         },
         child: _buildPages(),
       ),
