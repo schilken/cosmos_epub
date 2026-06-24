@@ -142,6 +142,22 @@ class _ShelfScreenState extends State<ShelfScreen> {
     await _loadShelf();
   }
 
+  Future<void> _openTableExample() async {
+    if (!mounted) return;
+    try {
+      await CosmosEpub.openAssetBook(
+        assetPath: 'assets/example-with-table.epub',
+        context: context,
+        bookId: 'example_with_table',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open table example: $e')),
+      );
+    }
+  }
+
   Future<void> _openBook(String path) async {
     if (!mounted) return;
     try {
@@ -244,6 +260,11 @@ class _ShelfScreenState extends State<ShelfScreen> {
       appBar: AppBar(
         title: const Text('7epubs'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.table_chart),
+            tooltip: 'Open table example',
+            onPressed: _openTableExample,
+          ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             tooltip: 'Clear database',

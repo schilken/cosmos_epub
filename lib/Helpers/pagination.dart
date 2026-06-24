@@ -225,6 +225,7 @@ class _PagingWidgetState extends State<PagingWidget> {
     pages = _pageHtmls.map((pageHtml) {
       return _HighlightablePage(
         pageHtml: pageHtml,
+        pageWidth: pageSize.width - 20.w,
         chapterTitle: widget.chapterTitle,
         style: widget.style,
         rawFontFamily: widget.rawFontFamily,
@@ -304,6 +305,13 @@ class _PagingWidgetState extends State<PagingWidget> {
 
 class _HighlightablePage extends StatefulWidget {
   final String pageHtml;
+
+  /// Available content width for the page. Used by HtmlTextBuilder to decide
+  /// whether a `<table>` should be wrapped in a horizontal scroll view. Both
+  /// the temp + final builders inside [_buildContent] receive this so the
+  /// accumulated page text (and therefore highlight offsets + the page key
+  /// hash) stay identical between the two passes.
+  final double pageWidth;
   final String chapterTitle;
   final TextStyle style;
   final String rawFontFamily;
@@ -315,6 +323,7 @@ class _HighlightablePage extends StatefulWidget {
 
   const _HighlightablePage({
     required this.pageHtml,
+    required this.pageWidth,
     this.chapterTitle = '',
     required this.style,
     this.rawFontFamily = 'Segoe',
@@ -338,7 +347,10 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   HtmlTextBuilder? _lastBuilder;
 
   List<Widget> _buildContent() {
-    // Build once to get the page key from accumulated block text
+    final tableMaxWidth = widget.pageWidth;
+    // Build once to get the page key from accumulated block text. maxWidth is
+    // threaded through so cell-text accumulation matches the final builder
+    // exactly (same scroll-vs-fit decision → identical cell reading order).
     final tempBuilder = HtmlTextBuilder(
       fontSize: widget.style.fontSize ?? 17.0,
       fontFamily: widget.rawFontFamily,
@@ -346,6 +358,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       textColor: widget.style.color ?? Colors.black,
       accentColor: widget.accentColor,
       onTextTap: widget.onTextTap,
+      maxWidth: tableMaxWidth,
     );
     tempBuilder.build(widget.pageHtml);
     final pageKey =
@@ -364,6 +377,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       textColor: widget.style.color ?? Colors.black,
       accentColor: widget.accentColor,
       onTextTap: widget.onTextTap,
+      maxWidth: tableMaxWidth,
       highlights: pageHighlights,
       onParagraphTapped: (start, end) {
         _tappedParagraphStart = start;
