@@ -7,6 +7,7 @@ class Assets {
 
   static const String book = 'assets/book.epub';
   static const String bookNested = 'assets/book_nested.epub';
+  static const String bookWithTable = 'assets/examüle-with-table.epub';
 }
 
 class AssetGenImage {

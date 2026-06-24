@@ -6,7 +6,7 @@ Pinned via FVM: **3.35.0**. Run `fvm use` before any `flutter` commands, or pref
 ## Package layout
 - **Library root:** `lib/cosmos_epub.dart` — public API (`CosmosEpub` class)
 - **Core reader widget:** `lib/show_epub.dart` (894 lines, `ShowEpub` StatefulWidget)
-- **Example app:** `example/lib/main.dart` — single screen, opens `assets/book.epub`
+- **Example app:** `7epubs/lib/main.dart` — single screen, opens `assets/book_nested.epub`
 - **Generated file:** `lib/Model/book_progress_model.g.dart` — Isar adapter, do not edit manually
 
 ## Essential commands
@@ -49,9 +49,9 @@ The `.g.dart` file is committed; keep it in sync.
 No tests exist. No CI workflows configured. No linting beyond `flutter_lints` defaults.
 
 ## Example app assets
-Two test EPUBs live in `example/assets/`: `book.epub` and `book_nested.epub`. Asset paths are also in `example/lib/generated/assets.dart` (auto-generated, do not edit).
+Three test EPUBs live in `7epubs/assets/`: `book.epub` , `book_nested.epub` and `example-with-table.epub`. Asset paths are also in `7epubs/lib/generated/assets.dart` (auto-generated, do not edit).
 
 ## Known quirks
-- `example/README.md` is stale boilerplate (mentions FlutterToast) — ignore it.
-- `pubspec.lock` in `example/` still shows `cosmos_epub: 0.0.3` even though root is `1.0.0` — this is a display artefact of path dependencies.
+- `7epubs/README.md` is stale boilerplate (mentions FlutterToast) — ignore it.
+- `pubspec.lock` in `7epubs/` still shows `cosmos_epub: 0.0.3` even though root is `1.0.0` — this is a display artefact of path dependencies.
 - `generated/assets.dart` in the example is generated (likely `flutter_gen`); do not edit manually.
