@@ -83,8 +83,7 @@ class HtmlPaginator {
     if (tag == 'br') return fontSize * 0.5;
     if (tag == 'img') return _estimateImageHeight(block) + fontSize * 0.6;
     if (tag == 'table') {
-      final rows = block.element?.querySelectorAll('tr').length ?? 1;
-      return rows * (fontSize * 1.5 + 8.0) + fontSize * 0.6;
+      return tableBlockHeight(block.element!, fontSize);
     }
 
     // Build TextSpan matching _styleForTag + _buildSpans logic
@@ -120,7 +119,10 @@ class HtmlPaginator {
         if (text.isNotEmpty) spans.add(TextSpan(text: text, style: style));
       } else if (child is html_dom.Element) {
         final tag = child.localName?.toLowerCase() ?? '';
-        if (tag == 'br') { spans.add(const TextSpan(text: '\n')); continue; }
+        if (tag == 'br') {
+          spans.add(const TextSpan(text: '\n'));
+          continue;
+        }
         if (tag == 'img') continue;
         _buildSpans(child, spans, _applyInlineTag(tag, style));
       }
@@ -129,37 +131,62 @@ class HtmlPaginator {
 
   TextStyle _applyInlineTag(String tag, TextStyle base) {
     switch (tag) {
-      case 'b' || 'strong': return base.copyWith(fontWeight: FontWeight.bold);
-      case 'i' || 'em' || 'cite': return base.copyWith(fontStyle: FontStyle.italic);
-      case 'u' || 'ins': return base.copyWith(decoration: TextDecoration.underline);
-      case 'code': return base.copyWith(fontFamily: 'monospace', package: null);
-      default: return base;
+      case 'b' || 'strong':
+        return base.copyWith(fontWeight: FontWeight.bold);
+      case 'i' || 'em' || 'cite':
+        return base.copyWith(fontStyle: FontStyle.italic);
+      case 'u' || 'ins':
+        return base.copyWith(decoration: TextDecoration.underline);
+      case 'code':
+        return base.copyWith(fontFamily: 'monospace', package: null);
+      default:
+        return base;
     }
   }
 
   TextStyle _styleForTag(String tag) {
     switch (tag) {
-      case 'h1': return _baseStyle.copyWith(fontSize: fontSize * 2.0, fontWeight: FontWeight.bold);
-      case 'h2': return _baseStyle.copyWith(fontSize: fontSize * 1.5, fontWeight: FontWeight.bold);
-      case 'h3': return _baseStyle.copyWith(fontSize: fontSize * 1.17, fontWeight: FontWeight.bold);
-      case 'h4': return _baseStyle.copyWith(fontWeight: FontWeight.bold);
-      case 'h5': return _baseStyle.copyWith(fontSize: fontSize * 0.83, fontWeight: FontWeight.bold);
-      case 'h6': return _baseStyle.copyWith(fontSize: fontSize * 0.67, fontWeight: FontWeight.bold);
-      case 'blockquote': return _baseStyle.copyWith(fontStyle: FontStyle.italic);
-      case 'pre' || 'code': return _baseStyle.copyWith(fontFamily: 'monospace', package: null);
-      default: return _baseStyle;
+      case 'h1':
+        return _baseStyle.copyWith(
+            fontSize: fontSize * 2.0, fontWeight: FontWeight.bold);
+      case 'h2':
+        return _baseStyle.copyWith(
+            fontSize: fontSize * 1.5, fontWeight: FontWeight.bold);
+      case 'h3':
+        return _baseStyle.copyWith(
+            fontSize: fontSize * 1.17, fontWeight: FontWeight.bold);
+      case 'h4':
+        return _baseStyle.copyWith(fontWeight: FontWeight.bold);
+      case 'h5':
+        return _baseStyle.copyWith(
+            fontSize: fontSize * 0.83, fontWeight: FontWeight.bold);
+      case 'h6':
+        return _baseStyle.copyWith(
+            fontSize: fontSize * 0.67, fontWeight: FontWeight.bold);
+      case 'blockquote':
+        return _baseStyle.copyWith(fontStyle: FontStyle.italic);
+      case 'pre' || 'code':
+        return _baseStyle.copyWith(fontFamily: 'monospace', package: null);
+      default:
+        return _baseStyle;
     }
   }
 
   /// Vertical padding per tag — matches HtmlTextBuilder._paddingForTag
   double _paddingForTag(String tag) {
     switch (tag) {
-      case 'h1': return fontSize * 1.6;
-      case 'h2': return fontSize * 1.2;
-      case 'h3' || 'h4' || 'h5' || 'h6': return fontSize * 0.8;
-      case 'blockquote': return fontSize * 0.6 + fontSize;
-      case 'li': return fontSize * 0.2 + fontSize;
-      default: return fontSize * 0.6;
+      case 'h1':
+        return fontSize * 1.6;
+      case 'h2':
+        return fontSize * 1.2;
+      case 'h3' || 'h4' || 'h5' || 'h6':
+        return fontSize * 0.8;
+      case 'blockquote':
+        return fontSize * 0.6 + fontSize;
+      case 'li':
+        return fontSize * 0.2 + fontSize;
+      default:
+        return fontSize * 0.6;
     }
   }
 
@@ -195,8 +222,15 @@ class HtmlPaginator {
   bool _isContainerOnly(html_dom.Element element) {
     final tag = element.localName?.toLowerCase();
     if (const {
-      'body', 'html', 'section', 'article', 'main',
-      'aside', 'nav', 'header', 'footer'
+      'body',
+      'html',
+      'section',
+      'article',
+      'main',
+      'aside',
+      'nav',
+      'header',
+      'footer'
     }.contains(tag)) return true;
     if (tag == 'div' || tag == 'span') {
       final hasDirectText = element.nodes
@@ -214,8 +248,10 @@ class HtmlPaginator {
     final widthAttr = target.attributes['width'];
     final heightAttr = target.attributes['height'];
     if (widthAttr != null && heightAttr != null) {
-      final imgW = double.tryParse(widthAttr.replaceAll(RegExp(r'[^0-9.]'), ''));
-      final imgH = double.tryParse(heightAttr.replaceAll(RegExp(r'[^0-9.]'), ''));
+      final imgW =
+          double.tryParse(widthAttr.replaceAll(RegExp(r'[^0-9.]'), ''));
+      final imgH =
+          double.tryParse(heightAttr.replaceAll(RegExp(r'[^0-9.]'), ''));
       if (imgW != null && imgW > 0 && imgH != null) {
         return (imgH * pageWidth / imgW).clamp(50.0, pageHeight * 0.8);
       }
@@ -232,10 +268,55 @@ class HtmlPaginator {
       RegExp(
           r'<(title|script|textarea|style|div|span|p|a|table|tbody|tr|td|th|ul|ol|li|h[1-6]|section|article|aside|header|footer|nav|main|blockquote|pre|code|em|strong|b|i|u|sub|sup|dd|dt|dl|figure|figcaption|details|summary)(\s[^>]*)?\s*/>',
           caseSensitive: false),
-      (match) => '<${match.group(1)}${match.group(2) ?? ''}></${match.group(1)}>',
+      (match) =>
+          '<${match.group(1)}${match.group(2) ?? ''}></${match.group(1)}>',
     );
     html = html.replaceAll(RegExp(r'<\?xml[^?]*\?>'), '');
     return html;
+  }
+
+  /// Height estimate for a `<table>` block using the new bordered Flutter
+  /// `Table` renderer. Accounts for header/body row heights, per-cell
+  /// padding, TableBorder thickness, and a small outer margin.
+  @visibleForTesting
+  static double tableBlockHeight(html_dom.Element table, double fontSize) {
+    final headerRows = table.querySelectorAll('thead tr').length;
+
+    // When there's no explicit <thead>, treat the first row containing
+    // exclusively <th> cells as the header row (matches HtmlTableParser
+    // convention so the paginator estimates the same extra weight).
+    var extraImplicitHeader = 0;
+    if (headerRows == 0) {
+      final firstRow = table.querySelector('tr');
+      if (firstRow != null &&
+          firstRow.querySelectorAll('td').isEmpty &&
+          firstRow.querySelectorAll('th').isNotEmpty) {
+        extraImplicitHeader = 1;
+      }
+    }
+    final effectiveHeaderRows = headerRows + extraImplicitHeader;
+
+    final allRows = table.querySelectorAll('tr').length;
+    final bodyRows = allRows - effectiveHeaderRows;
+
+    // Column count: max logical columns across rows, honouring colspan.
+    var cols = 0;
+    for (final tr in table.querySelectorAll('tr')) {
+      var logical = 0;
+      for (final td in tr.querySelectorAll('td, th')) {
+        final span = int.tryParse(td.attributes['colspan']?.trim() ?? '') ?? 1;
+        logical += span.clamp(1, 1000);
+      }
+      if (logical > cols) cols = logical;
+    }
+
+    final headerHeight = effectiveHeaderRows * fontSize * 1.7;
+    final bodyHeight = bodyRows * fontSize * 1.4;
+    final cellPaddingTotal = allRows * fontSize * 0.5; // 2 × 0.25
+    final border = (allRows + cols + 2).toDouble();
+    final outerPadding = fontSize * 0.6;
+
+    return headerHeight + bodyHeight + cellPaddingTotal + border + outerPadding;
   }
 }
 

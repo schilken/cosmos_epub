@@ -41,9 +41,9 @@ Replace the current "flatten `<table>` to plain text" rendering path with a nati
 ### Phase 2: Paginator table-height sync
 
 - **Goal**: Page breaks around tables stay accurate under new renderer (borders + header padding + cell padding + optional horizontal scroll wrapper).
-- [ ] `lib/Helpers/html_paginator.dart` — refine table branch in `_measureBlockHeight` (line 85): count header rows separately, add per-cell padding `2 * fontSize * 0.25`, add border thickness `1.0 * (rows + 1 + cols + 1)`, header row height `fontSize * 1.7`, body row height `fontSize * 1.4`, outer padding `fontSize * 0.6`.
-- [ ] TDD: `HtmlPaginator._measureBlockHeight` of a 3-row (1 header + 2 body), 2-column table returns value within ±10% of an actual laid-out `Table` of identical content measured by `TextPainter` along the height axis (sanity bound).
-- [ ] Verify: `fvm flutter analyze` && `fvm flutter test`
+- [x] `lib/Helpers/html_paginator.dart` — refine table branch in `_measureBlockHeight` (line 85): count header rows separately, add per-cell padding `2 * fontSize * 0.25`, add border thickness `1.0 * (rows + 1 + cols + 1)`, header row height `fontSize * 1.7`, body row height `fontSize * 1.4`, outer padding `fontSize * 0.6`.
+- [x] TDD: `HtmlPaginator._measureBlockHeight` of a 3-row (1 header + 2 body), 2-column table returns value within ±10% of an actual laid-out `Table` of identical content measured by `TextPainter` along the height axis (sanity bound).
+- [x] Verify: `fvm flutter analyze` && `fvm flutter test`
 - [ ] Manual: paginated book with a long table → no awkward half-row stranded at page top/bottom; tables taller than page sit on their own page (existing behavior).
 
 ## Risks / Out of scope
