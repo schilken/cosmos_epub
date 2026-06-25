@@ -221,18 +221,13 @@ class _PagingWidgetState extends State<PagingWidget> {
 
     _pageHtmls = paginator.paginate(resolvedHtml);
 
-    // Insert soft hyphens AFTER pagination — applied to text that goes
-    // directly to native RichText (not flutter_html which strips \u00AD)
-    _pageHtmls = _pageHtmls.map((h) => _hyphenateHtml(h)).toList();
-
-    // If an anchor fragment was specified, find which page contains it
+    // Anchor detection must run BEFORE hyphenation so text matching works
+    // (soft hyphens break substring containment checks).
     _anchorPageIndex = -1;
     final anchor = widget.anchorFragment;
     debugPrint(
         '[Bug2] _paginate: anchor="$anchor", _pageHtmls=${_pageHtmls.length}');
     if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
-      // Search paginated page HTMLs (fast path for block-level elements
-      // like <h2 id="..."> whose id survives pagination).
       for (int i = 0; i < _pageHtmls.length; i++) {
         if (_pageHtmls[i].contains('id="$anchor"') ||
             _pageHtmls[i].contains("id='$anchor'") ||
@@ -243,14 +238,13 @@ class _PagingWidgetState extends State<PagingWidget> {
           break;
         }
       }
-      // Fallback: anchor was on a container element (div/section) that
-      // got dissolved during pagination. Search the original HTML.
       if (_anchorPageIndex < 0) {
         final anchorPat = RegExp('id=["\']$anchor["\']|name=["\']$anchor["\']');
         final foundInOrig = resolvedHtml.contains(anchorPat);
         debugPrint(
             '[Bug2] _paginate: anchor in original HTML=$foundInOrig, htmlLen=${resolvedHtml.length}');
         if (foundInOrig) {
+          // Use un-hyphenated page HTMLs for text matching
           _anchorPageIndex =
               _findAnchorPageByText(resolvedHtml, anchor, _pageHtmls);
           debugPrint(
@@ -261,6 +255,9 @@ class _PagingWidgetState extends State<PagingWidget> {
     if (_anchorPageIndex < 0 && anchor != null && anchor.isNotEmpty) {
       debugPrint('[Bug2] _paginate: anchor "$anchor" NOT found in any page');
     }
+
+    // Insert soft hyphens AFTER pagination and anchor detection
+    _pageHtmls = _pageHtmls.map((h) => _hyphenateHtml(h)).toList();
 
     pages = _pageHtmls.map((pageHtml) {
       return _HighlightablePage(
