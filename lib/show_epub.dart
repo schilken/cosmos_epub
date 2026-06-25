@@ -473,13 +473,20 @@ class ShowEpubState extends State<ShowEpub> {
   }
 
   nextChapter() async {
+    debugPrint(
+        '[Bug1] nextChapter called: _currentChapterIndex=$_currentChapterIndex, chaptersList.length=${chaptersList.length}');
     await bookProgress.setCurrentPageIndex(bookId, 0);
 
     final progress = await bookProgress.getBookProgress(bookId);
     var index = progress.currentChapterIndex ?? 0;
 
+    debugPrint(
+        '[Bug1] nextChapter: index=$index, chaptersList.length=${chaptersList.length}');
     if (index != chaptersList.length - 1) {
+      debugPrint('[Bug1] nextChapter: advancing to ${index + 1}');
       reLoadChapter(index: index + 1);
+    } else {
+      debugPrint('[Bug1] nextChapter: already at last chapter, staying');
     }
   }
 
@@ -553,6 +560,9 @@ class ShowEpubState extends State<ShowEpub> {
                                         var currentChapterIndex =
                                             _currentChapterIndex;
 
+                                        debugPrint(
+                                            '[Bug2] show_epub: currentChapterIndex=$currentChapterIndex, chapter=${chaptersList[currentChapterIndex].chapter}, anchorFragment=${chaptersList[currentChapterIndex].anchorFragment}');
+
                                         return PagingWidget(
                                           htmlContent: htmlContent,
                                           contentParser: contentParser,
@@ -594,6 +604,8 @@ class ShowEpubState extends State<ShowEpub> {
                                           },
                                           onLastPage:
                                               (index, totalPages) async {
+                                            debugPrint(
+                                                '[Bug1] show_epub onLastPage: index=$index, totalPages=$totalPages');
                                             widget.onLastPage?.call(index);
                                             nextChapter();
                                           },

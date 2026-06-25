@@ -53,6 +53,10 @@ class EpubContentParser {
       final fragment = source.contains('#') ? source.split('#').last : null;
       final cleanSource = source.split('#').first;
       final htmlContent = _resolveContentBySource(cleanSource);
+      if (fragment != null && fragment.isNotEmpty) {
+        print(
+            '[Bug2] _flattenNavPoints: source="$source", fragment="$fragment"');
+      }
 
       if (source.isEmpty && htmlContent.isEmpty) {
         // Section wrapper with no content — generate a centered title page

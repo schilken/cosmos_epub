@@ -120,6 +120,7 @@ class PageFlipWidgetState extends State<PageFlipWidget>
                 if (!_isLastPage) {
                   nextPage();
                 } else {
+                  debugPrint('[Bug1] onLastPageTap invoked');
                   widget.onLastPageTap?.call();
                 }
               }

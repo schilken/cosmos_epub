@@ -227,14 +227,20 @@ class _PagingWidgetState extends State<PagingWidget> {
     // If an anchor fragment was specified, find which page contains it
     _anchorPageIndex = -1;
     final anchor = widget.anchorFragment;
+    debugPrint(
+        '[Bug2] _paginate: anchorFragment="$anchor", _pageHtmls.length=${_pageHtmls.length}');
     if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
       for (int i = 0; i < _pageHtmls.length; i++) {
         if (_pageHtmls[i].contains('id="$anchor"') ||
             _pageHtmls[i].contains("id='$anchor'")) {
           _anchorPageIndex = i;
+          debugPrint('[Bug2] _paginate: found anchor at page $i');
           break;
         }
       }
+    }
+    if (_anchorPageIndex < 0 && anchor != null && anchor.isNotEmpty) {
+      debugPrint('[Bug2] _paginate: anchor "$anchor" NOT found in any page');
     }
 
     pages = _pageHtmls.map((pageHtml) {
@@ -304,6 +310,8 @@ class _PagingWidgetState extends State<PagingWidget> {
                                 }
                               },
                               onLastPageTap: () {
+                                debugPrint(
+                                    '[Bug1] PagingWidget onLastPageTap: _currentPageIndex=$_currentPageIndex, pages.length=${pages.length}');
                                 final currentPage =
                                     _pageController.currentState?.currentPage ??
                                         _currentPageIndex;
