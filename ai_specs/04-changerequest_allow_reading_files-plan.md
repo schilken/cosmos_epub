@@ -27,27 +27,27 @@ Integrate `macos_secure_bookmarks` to persist macOS file access across app resta
 ### Phase 2: BookmarkService — business logic
 
 - **Goal**: Abstraction over `SecureBookmarks` + GetStorage for creating, resolving, and removing bookmarks
-- [ ] `7epubs/lib/bookmark_service.dart` — create `BookmarkService` class with:
-  - Constructor injection: `SecureBookmarks` instance, `GetStorage` instance
-  - `Future<String?> bookmarkFile(String path)` — calls `_bookmarks.bookmark(File(path))`, stores in GetStorage key `'bookmark_$path'`, returns bookmark string
-  - `Future<String?> getBookmark(String path)` — reads from GetStorage, returns null if missing
+- [x] `7epubs/lib/bookmark_service.dart` — create `BookmarkService` class with:
+  - Constructor injection: `SecureBookmarksInterface` instance, `BookmarkStorageInterface` instance, `bool? isMacOS`
+  - `Future<String?> bookmarkFile(String path)` — calls `_bookmarks.bookmark(File(path))`, stores in storage key `'bookmark_$path'`, returns bookmark string
+  - `Future<String?> getBookmark(String path)` — reads from storage, returns null if missing
   - `Future<bool> resolveAndAccess(String path)` — gets bookmark, calls `resolveBookmark()`, calls `startAccessingSecurityScopedResource()`, returns success
   - `Future<void> stopAccessing(String path)` — calls `stopAccessingSecurityScopedResource()` on resolved file
-  - `Future<void> removeBookmark(String path)` — removes from GetStorage
+  - `Future<void> removeBookmark(String path)` — removes from storage
   - `Future<void> clearAll()` — iterates all `'bookmark_'` keys and removes them
   - `Future<void> addDirectoryBookmark(String dirPath)` — creates bookmark for directory, stores with key `'bookmark_dir_$uuid'`, stores path mapping
-  - `Future<List<String>> getAuthorizedDirectories()` — lists stored directory bookmark entries
+  - `Future<List<AuthorizedDirectory>> getAuthorizedDirectories()` — lists stored directory bookmark entries
   - `Future<void> removeDirectoryBookmark(String entryKey)` — removes single directory bookmark
-  - All methods guarded: no-op when `!Platform.isMacOS`
-  - Top-level `startAccessingSecurityScopedResource`/`stopAccessingSecurityScopedResource` wrapped via injectable function references (allow fakes in tests)
-- [ ] TDD: happy path — `bookmarkFile(path)` with valid File returns non-null bookmark string
-- [ ] TDD: happy path — `resolveAndAccess(path)` with stored bookmark returns true
-- [ ] TDD: edge case — `resolveAndAccess(path)` with no stored bookmark returns false without throwing
-- [ ] TDD: edge case — `bookmarkFile(path)` on non-existent file throws, caller catches
-- [ ] TDD: happy path — `addDirectoryBookmark(dirPath)` + `getAuthorizedDirectories()` round-trip
-- [ ] TDD: edge case — `removeDirectoryBookmark(key)` removes only targeted entry
-- [ ] TDD: edge case — `clearAll()` removes all bookmark keys but leaves non-bookmark keys intact
-- [ ] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/`
+  - All methods guarded: no-op when `!_isMacOS`
+  - Abstract interfaces (`SecureBookmarksInterface`, `BookmarkStorageInterface`) for testability
+- [x] TDD: happy path — `bookmarkFile(path)` with valid File returns non-null bookmark string
+- [x] TDD: happy path — `resolveAndAccess(path)` with stored bookmark returns true
+- [x] TDD: edge case — `resolveAndAccess(path)` with no stored bookmark returns false without throwing
+- [x] TDD: edge case — `bookmarkFile(path)` on non-existent file propagates exception from SecureBookmarks
+- [x] TDD: happy path — `addDirectoryBookmark(dirPath)` + `getAuthorizedDirectories()` round-trip
+- [x] TDD: edge case — `removeDirectoryBookmark(key)` removes only targeted entry
+- [x] TDD: edge case — `clearAll()` removes all bookmark keys but leaves non-bookmark keys intact
+- [x] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/` (8 tests pass, pre-existing flutter_lints warning only)
 
 ### Phase 3: Integrate bookmarks into ShelfScreen
 
