@@ -106,6 +106,14 @@ Integrate `macos_secure_bookmarks` to persist macOS file access across app resta
   - Added optional `bookmarkService` and `initialShelf` params to `ShelfScreen` for testability
 - [x] Verify: `fvm flutter test test/journeys/macos_bookmark_journey_test.dart` in `7epubs/` (3 journey tests pass)
 
+## Post-implementation fixes
+
+- **resolveAndAccess now returns `String?` (resolved path)** instead of `bool`. The resolved path from `resolveBookmark` may differ from the stored shelf path (e.g. if the file moved). Callers use the resolved path for all subsequent file operations.
+- **Directory bookmark fallback**: `resolveAndAccess` now tries file-level bookmark first, then scans authorized directories for a matching parent directory. If a parent directory is authorized, it resolves and starts accessing that directory's bookmark, granting access to all files within it.
+- **stopAccessing** also tries directory bookmarks as a fallback when stopping access.
+- **_loadShelf** now stops access after checking `existsSync` to avoid leaking security-scoped resource counts across shelf entries.
+- **_openBook** now uses the resolved path returned by `resolveAndAccess` for `openLocalBook`.
+
 ## Risks / Out of scope
 
 - **Risks**:

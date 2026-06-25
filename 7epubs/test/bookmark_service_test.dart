@@ -97,7 +97,8 @@ void main() {
       }
     });
 
-    test('resolveAndAccess returns true with stored bookmark', () async {
+    test('resolveAndAccess returns resolved path with stored bookmark',
+        () async {
       final tempFile = File('test_resolve.epub');
       try {
         await tempFile.writeAsString('mock epub content');
@@ -107,16 +108,39 @@ void main() {
         await fakeStorage.write('bookmark_${tempFile.path}', 'stored-bookmark');
 
         final result = await bookmarkService.resolveAndAccess(tempFile.path);
-        expect(result, true);
+        expect(result, tempFile.path);
       } finally {
         if (tempFile.existsSync()) tempFile.deleteSync();
       }
     });
 
-    test('resolveAndAccess returns false with no stored bookmark', () async {
+    test('resolveAndAccess returns null with no bookmark at all', () async {
       final result =
           await bookmarkService.resolveAndAccess('/nonexistent/file.epub');
-      expect(result, false);
+      expect(result, isNull);
+    });
+    test('resolveAndAccess falls back to directory bookmark', () async {
+      final tempDir =
+          await Directory.systemTemp.createTemp('bookmark_dir_test_');
+      try {
+        final tempFile = File('${tempDir.path}/my.epub');
+        await tempFile.writeAsString('mock epub content');
+
+        await fakeStorage.write('authorized_directories', [
+          {'key': 'bookmark_dir_xyz', 'path': tempDir.path},
+        ]);
+        await fakeStorage.write('bookmark_dir_xyz', 'dir-bookmark-data');
+
+        fakeBookmarks._resolvedEntity = tempDir;
+        fakeBookmarks._startAccessResult = true;
+
+        final result = await bookmarkService.resolveAndAccess(tempFile.path);
+        expect(result, tempFile.path);
+      } finally {
+        if (tempDir.existsSync()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
     });
 
     test('bookmarkFile propagates exception from SecureBookmarks', () {

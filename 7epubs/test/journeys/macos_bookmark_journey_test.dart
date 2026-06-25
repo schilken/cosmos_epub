@@ -34,7 +34,7 @@ void main() {
 
       final svc2 = harness.createService();
       final resolved = await svc2.resolveAndAccess(testEpub.path);
-      expect(resolved, true);
+      expect(resolved, isNotNull);
     });
 
     testWidgets('shelf shows bookmarked file as available', (tester) async {

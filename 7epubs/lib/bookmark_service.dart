@@ -80,33 +80,75 @@ class BookmarkService {
     return data;
   }
 
-  Future<bool> resolveAndAccess(String path) async {
-    if (!_isMacOS) return false;
+  Future<String?> resolveAndAccess(String path) async {
+    if (!_isMacOS) return null;
 
-    final key = 'bookmark_$path';
-    final data = _storage.read(key) as String?;
-    if (data == null) return false;
+    final fileKey = 'bookmark_$path';
+    final fileData = _storage.read(fileKey) as String?;
+    if (fileData != null) {
+      try {
+        final entity = await _bookmarks.resolveBookmark(fileData);
+        final ok =
+            await _bookmarks.startAccessingSecurityScopedResource(entity);
+        if (ok) return entity.path;
+      } catch (_) {}
+    }
 
-    final entity = await _bookmarks.resolveBookmark(data);
-    return _bookmarks.startAccessingSecurityScopedResource(entity);
+    final dirs = _readDirectoryEntries();
+    for (final dir in dirs) {
+      final dirPath = dir['path'] as String;
+      if (!path.startsWith(dirPath)) continue;
+
+      final dirKey = dir['key'] as String;
+      final dirData = _storage.read(dirKey) as String?;
+      if (dirData == null) continue;
+
+      try {
+        final entity =
+            await _bookmarks.resolveBookmark(dirData, isDirectory: true);
+        final ok =
+            await _bookmarks.startAccessingSecurityScopedResource(entity);
+        if (ok) return path;
+      } catch (_) {}
+    }
+
+    return null;
   }
 
   Future<String?> getBookmark(String path) async {
-    if (!Platform.isMacOS) return null;
+    if (!_isMacOS) return null;
 
     final key = 'bookmark_$path';
     return _storage.read(key) as String?;
   }
 
   Future<void> stopAccessing(String path) async {
-    if (!Platform.isMacOS) return;
+    if (!_isMacOS) return;
 
-    final key = 'bookmark_$path';
-    final data = _storage.read(key) as String?;
-    if (data == null) return;
+    final fileKey = 'bookmark_$path';
+    final fileData = _storage.read(fileKey) as String?;
+    if (fileData != null) {
+      try {
+        final entity = await _bookmarks.resolveBookmark(fileData);
+        await _bookmarks.stopAccessingSecurityScopedResource(entity);
+      } catch (_) {}
+    }
 
-    final entity = await _bookmarks.resolveBookmark(data);
-    await _bookmarks.stopAccessingSecurityScopedResource(entity);
+    final dirs = _readDirectoryEntries();
+    for (final dir in dirs) {
+      final dirPath = dir['path'] as String;
+      if (!path.startsWith(dirPath)) continue;
+
+      final dirKey = dir['key'] as String;
+      final dirData = _storage.read(dirKey) as String?;
+      if (dirData == null) continue;
+
+      try {
+        final entity =
+            await _bookmarks.resolveBookmark(dirData, isDirectory: true);
+        await _bookmarks.stopAccessingSecurityScopedResource(entity);
+      } catch (_) {}
+    }
   }
 
   Future<void> removeBookmark(String path) async {

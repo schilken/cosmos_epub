@@ -87,10 +87,16 @@ class _ShelfScreenState extends State<ShelfScreen> {
     final paths = ShelfService.getShelf();
     final entries = <_ShelfEntry>[];
     for (final path in paths) {
+      var effectivePath = path;
+
       if (Platform.isMacOS) {
-        await _bookmarkService.resolveAndAccess(path);
+        final resolved = await _bookmarkService.resolveAndAccess(path);
+        if (resolved != null) {
+          effectivePath = resolved;
+        }
       }
-      final exists = File(path).existsSync();
+
+      final exists = File(effectivePath).existsSync();
       String? progressText;
       if (exists) {
         try {
@@ -105,6 +111,9 @@ class _ShelfScreenState extends State<ShelfScreen> {
           // Non-fatal — show "Not started"
         }
       }
+
+      await _bookmarkService.stopAccessing(path);
+
       entries.add(_ShelfEntry(
         path: path,
         exists: exists,
@@ -194,9 +203,15 @@ class _ShelfScreenState extends State<ShelfScreen> {
   Future<void> _openBook(String path) async {
     if (!mounted) return;
     try {
-      await _bookmarkService.resolveAndAccess(path);
+      var effectivePath = path;
+      if (Platform.isMacOS) {
+        final resolved = await _bookmarkService.resolveAndAccess(path);
+        if (resolved != null) {
+          effectivePath = resolved;
+        }
+      }
       await CosmosEpub.openLocalBook(
-        localPath: path,
+        localPath: effectivePath,
         bookId: path,
         context: context,
       );
