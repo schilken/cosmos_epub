@@ -304,8 +304,10 @@ class _PagingWidgetState extends State<PagingWidget> {
                                 }
                               },
                               onLastPageTap: () {
-                                widget.onLastPage(
-                                    _currentPageIndex, pages.length);
+                                final currentPage =
+                                    _pageController.currentState?.currentPage ??
+                                        _currentPageIndex;
+                                widget.onLastPage(currentPage, pages.length);
                               },
                               backgroundColor: widget.backgroundColor,
                               lastPage: widget.lastWidget,

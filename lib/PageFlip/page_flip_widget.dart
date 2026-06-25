@@ -42,6 +42,8 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   bool get _isLastPage => _currentPage >= _effectiveChildren.length - 1;
   bool get _isFirstPage => _currentPage == 0;
 
+  int get currentPage => _currentPage;
+
   void _buildEffectiveChildren() {
     _effectiveChildren = List.of(widget.children);
     if (widget.lastPage != null) {
@@ -75,9 +77,10 @@ class PageFlipWidgetState extends State<PageFlipWidget>
     super.didUpdateWidget(oldWidget);
     if (widget.children.length != oldWidget.children.length ||
         !identical(widget.children, oldWidget.children)) {
-      _currentPage = 0;
-      _controller.reset();
       _buildEffectiveChildren();
+      _currentPage =
+          widget.initialIndex.clamp(0, _effectiveChildren.length - 1);
+      _controller.reset();
       setState(() {});
     }
   }
