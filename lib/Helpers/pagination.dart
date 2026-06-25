@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:cosmos_epub/Component/highlight_toolbar.dart';
 import 'package:cosmos_epub/Helpers/epub_content_parser.dart';
 import 'package:cosmos_epub/Helpers/html_paginator.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:cosmos_epub/Helpers/html_text_builder.dart';
 import 'package:cosmos_epub/Model/highlight_model.dart';
 import 'package:cosmos_epub/PageFlip/page_flip_widget.dart';
@@ -227,20 +228,27 @@ class _PagingWidgetState extends State<PagingWidget> {
     // If an anchor fragment was specified, find which page contains it
     _anchorPageIndex = -1;
     final anchor = widget.anchorFragment;
-    debugPrint(
-        '[Bug2] _paginate: anchorFragment="$anchor", _pageHtmls.length=${_pageHtmls.length}');
     if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
+      // Search paginated page HTMLs (fast path for block-level elements
+      // like <h2 id="..."> whose id survives pagination).
       for (int i = 0; i < _pageHtmls.length; i++) {
         if (_pageHtmls[i].contains('id="$anchor"') ||
-            _pageHtmls[i].contains("id='$anchor'")) {
+            _pageHtmls[i].contains("id='$anchor'") ||
+            _pageHtmls[i].contains('name="$anchor"') ||
+            _pageHtmls[i].contains("name='$anchor'")) {
           _anchorPageIndex = i;
-          debugPrint('[Bug2] _paginate: found anchor at page $i');
           break;
         }
       }
-    }
-    if (_anchorPageIndex < 0 && anchor != null && anchor.isNotEmpty) {
-      debugPrint('[Bug2] _paginate: anchor "$anchor" NOT found in any page');
+      // Fallback: anchor was on a container element (div/section) that
+      // got dissolved during pagination. Search the original HTML.
+      if (_anchorPageIndex < 0) {
+        final anchorPat = RegExp('id=["\']$anchor["\']|name=["\']$anchor["\']');
+        if (resolvedHtml.contains(anchorPat)) {
+          _anchorPageIndex =
+              _findAnchorPageByText(resolvedHtml, anchor, _pageHtmls);
+        }
+      }
     }
 
     pages = _pageHtmls.map((pageHtml) {
@@ -257,6 +265,52 @@ class _PagingWidgetState extends State<PagingWidget> {
         onTextTap: widget.onTextTap,
       );
     }).toList();
+  }
+
+  /// Find which page contains text content near an anchor element, when the
+  /// anchor's `id` attribute was on a container element dissolved during
+  /// pagination.
+  int _findAnchorPageByText(
+      String resolvedHtml, String anchor, List<String> pageHtmls) {
+    try {
+      final doc = html_parser.parse(resolvedHtml);
+      // Find the element with the anchor id or name
+      final elem = doc.querySelector('[id="$anchor"]') ??
+          doc.querySelector('[name="$anchor"]') ??
+          doc.querySelector("[id='$anchor']") ??
+          doc.querySelector("[name='$anchor']");
+      if (elem == null) return -1;
+
+      // Take the first ~50 chars of text starting at or after the anchor element
+      final allText = doc.body?.text ?? '';
+      final anchorText = elem.text.trim();
+      if (anchorText.isEmpty) return -1;
+
+      // Find position of anchor text in full text, then look for the first
+      // 40-character segment of that text in the paginated pages
+      final searchText =
+          anchorText.length > 40 ? anchorText.substring(0, 40) : anchorText;
+      for (int i = 0; i < pageHtmls.length; i++) {
+        final pagePlain = html_parser.parse(pageHtmls[i]).body?.text ?? '';
+        if (pagePlain.contains(searchText)) {
+          return i;
+        }
+      }
+      // Try with normalized whitespace
+      final normalized = searchText.replaceAll(RegExp(r'\s+'), ' ');
+      for (int i = 0; i < pageHtmls.length; i++) {
+        final pagePlain = html_parser
+                .parse(pageHtmls[i])
+                .body
+                ?.text
+                ?.replaceAll(RegExp(r'\s+'), ' ') ??
+            '';
+        if (pagePlain.contains(normalized)) {
+          return i;
+        }
+      }
+    } catch (_) {}
+    return -1;
   }
 
   @override
