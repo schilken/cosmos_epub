@@ -228,6 +228,8 @@ class _PagingWidgetState extends State<PagingWidget> {
     // If an anchor fragment was specified, find which page contains it
     _anchorPageIndex = -1;
     final anchor = widget.anchorFragment;
+    debugPrint(
+        '[Bug2] _paginate: anchor="$anchor", _pageHtmls=${_pageHtmls.length}');
     if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
       // Search paginated page HTMLs (fast path for block-level elements
       // like <h2 id="..."> whose id survives pagination).
@@ -237,6 +239,7 @@ class _PagingWidgetState extends State<PagingWidget> {
             _pageHtmls[i].contains('name="$anchor"') ||
             _pageHtmls[i].contains("name='$anchor'")) {
           _anchorPageIndex = i;
+          debugPrint('[Bug2] _paginate: found anchor (direct) at page $i');
           break;
         }
       }
@@ -244,11 +247,19 @@ class _PagingWidgetState extends State<PagingWidget> {
       // got dissolved during pagination. Search the original HTML.
       if (_anchorPageIndex < 0) {
         final anchorPat = RegExp('id=["\']$anchor["\']|name=["\']$anchor["\']');
-        if (resolvedHtml.contains(anchorPat)) {
+        final foundInOrig = resolvedHtml.contains(anchorPat);
+        debugPrint(
+            '[Bug2] _paginate: anchor in original HTML=$foundInOrig, htmlLen=${resolvedHtml.length}');
+        if (foundInOrig) {
           _anchorPageIndex =
               _findAnchorPageByText(resolvedHtml, anchor, _pageHtmls);
+          debugPrint(
+              '[Bug2] _paginate: text-based fallback result=$_anchorPageIndex');
         }
       }
+    }
+    if (_anchorPageIndex < 0 && anchor != null && anchor.isNotEmpty) {
+      debugPrint('[Bug2] _paginate: anchor "$anchor" NOT found in any page');
     }
 
     pages = _pageHtmls.map((pageHtml) {
@@ -279,24 +290,23 @@ class _PagingWidgetState extends State<PagingWidget> {
           doc.querySelector('[name="$anchor"]') ??
           doc.querySelector("[id='$anchor']") ??
           doc.querySelector("[name='$anchor']");
+      debugPrint('[Bug2] _findAnchorPageByText: elem found=${elem != null}');
       if (elem == null) return -1;
 
-      // Take the first ~50 chars of text starting at or after the anchor element
-      final allText = doc.body?.text ?? '';
       final anchorText = elem.text.trim();
+      debugPrint(
+          '[Bug2] _findAnchorPageByText: anchorText="${anchorText.length > 60 ? anchorText.substring(0, 60) : anchorText}"...');
       if (anchorText.isEmpty) return -1;
 
-      // Find position of anchor text in full text, then look for the first
-      // 40-character segment of that text in the paginated pages
       final searchText =
           anchorText.length > 40 ? anchorText.substring(0, 40) : anchorText;
       for (int i = 0; i < pageHtmls.length; i++) {
         final pagePlain = html_parser.parse(pageHtmls[i]).body?.text ?? '';
         if (pagePlain.contains(searchText)) {
+          debugPrint('[Bug2] _findAnchorPageByText: matched text in page $i');
           return i;
         }
       }
-      // Try with normalized whitespace
       final normalized = searchText.replaceAll(RegExp(r'\s+'), ' ');
       for (int i = 0; i < pageHtmls.length; i++) {
         final pagePlain = html_parser
@@ -306,10 +316,14 @@ class _PagingWidgetState extends State<PagingWidget> {
                 ?.replaceAll(RegExp(r'\s+'), ' ') ??
             '';
         if (pagePlain.contains(normalized)) {
+          debugPrint('[Bug2] _findAnchorPageByText: matched (norm) in page $i');
           return i;
         }
       }
-    } catch (_) {}
+      debugPrint('[Bug2] _findAnchorPageByText: no page matched anchor text');
+    } catch (e) {
+      debugPrint('[Bug2] _findAnchorPageByText error: $e');
+    }
     return -1;
   }
 
