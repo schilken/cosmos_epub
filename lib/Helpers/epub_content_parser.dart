@@ -46,12 +46,13 @@ class EpubContentParser {
   void _flattenNavPoints(List<EpubNavigationPoint> points,
       List<LocalChapterModel> list, int depth) {
     for (final point in points) {
-      final title =
-          point.NavigationLabels?.isNotEmpty == true
-              ? point.NavigationLabels!.first.Text ?? '...'
-              : '...';
+      final title = point.NavigationLabels?.isNotEmpty == true
+          ? point.NavigationLabels!.first.Text ?? '...'
+          : '...';
       final source = point.Content?.Source ?? '';
-      final htmlContent = _resolveContentBySource(source);
+      final fragment = source.contains('#') ? source.split('#').last : null;
+      final cleanSource = source.split('#').first;
+      final htmlContent = _resolveContentBySource(cleanSource);
 
       if (source.isEmpty && htmlContent.isEmpty) {
         // Section wrapper with no content — generate a centered title page
@@ -66,6 +67,8 @@ class EpubContentParser {
           chapter: title,
           htmlContent: htmlContent,
           depth: depth,
+          contentSource: cleanSource.isEmpty ? null : cleanSource,
+          anchorFragment: fragment,
         ));
       }
 
@@ -77,12 +80,9 @@ class EpubContentParser {
     }
   }
 
-  /// Resolve a TOC source path to actual HTML content from the EPUB.
-  String _resolveContentBySource(String source) {
-    if (source.isEmpty) return '';
-
-    // Strip fragment (#anchor)
-    final cleanSource = source.split('#').first;
+  /// Resolve a clean source path (no fragment) to HTML content from the EPUB.
+  String _resolveContentBySource(String cleanSource) {
+    if (cleanSource.isEmpty) return '';
 
     final htmlFiles = epubBook.Content?.Html;
     if (htmlFiles == null) return '';

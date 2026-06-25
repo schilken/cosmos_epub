@@ -563,6 +563,9 @@ class ShowEpubState extends State<ShowEpub> {
                                           backgroundColor: backColor,
                                           lastWidget: null,
                                           starterPageIndex: _currentPageIndex,
+                                          anchorFragment:
+                                              chaptersList[currentChapterIndex]
+                                                  .anchorFragment,
                                           style: TextStyle(
                                               fontSize: _fontSize.sp,
                                               fontFamily: selectedTextStyle,

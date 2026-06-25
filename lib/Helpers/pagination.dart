@@ -138,6 +138,7 @@ class PagingWidget extends StatefulWidget {
   final Function(int, int) onLastPage;
   final Function(int, int)? onFirstPageBack;
   final Widget? lastWidget;
+  final String? anchorFragment;
 
   const PagingWidget({
     super.key,
@@ -161,6 +162,7 @@ class PagingWidget extends StatefulWidget {
     required this.chapterTitle,
     required this.totalChapters,
     this.lastWidget,
+    this.anchorFragment,
   });
 
   @override
@@ -171,6 +173,7 @@ class _PagingWidgetState extends State<PagingWidget> {
   List<String> _pageHtmls = [];
   List<Widget> pages = [];
   int _currentPageIndex = 0;
+  int _anchorPageIndex = -1;
   Future<void> paginateFuture = Future.value(true);
   late RenderBox _initializedRenderBox;
 
@@ -221,6 +224,19 @@ class _PagingWidgetState extends State<PagingWidget> {
     // directly to native RichText (not flutter_html which strips \u00AD)
     _pageHtmls = _pageHtmls.map((h) => _hyphenateHtml(h)).toList();
 
+    // If an anchor fragment was specified, find which page contains it
+    _anchorPageIndex = -1;
+    final anchor = widget.anchorFragment;
+    if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
+      for (int i = 0; i < _pageHtmls.length; i++) {
+        if (_pageHtmls[i].contains('id="$anchor"') ||
+            _pageHtmls[i].contains("id='$anchor'")) {
+          _anchorPageIndex = i;
+          break;
+        }
+      }
+    }
+
     pages = _pageHtmls.map((pageHtml) {
       return _HighlightablePage(
         pageHtml: pageHtml,
@@ -265,12 +281,13 @@ class _PagingWidgetState extends State<PagingWidget> {
                             key: _pageKey,
                             child: PageFlipWidget(
                               key: _pageController,
-                              initialIndex: widget.starterPageIndex != 0
-                                  ? (pages.isNotEmpty &&
+                              initialIndex: _anchorPageIndex >= 0
+                                  ? _anchorPageIndex
+                                  : (widget.starterPageIndex != 0 &&
+                                          pages.isNotEmpty &&
                                           widget.starterPageIndex < pages.length
                                       ? widget.starterPageIndex
-                                      : 0)
-                                  : widget.starterPageIndex,
+                                      : 0),
                               onPageFlip: (pageIndex, {bool? isForward}) {
                                 _currentPageIndex = pageIndex;
                                 widget.onPageFlip(pageIndex, pages.length);

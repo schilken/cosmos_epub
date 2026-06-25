@@ -42,11 +42,11 @@ The bottom bar correctly shows the subchapter title because `_currentChapterInde
 
 - **Goal**: Navigating to a subchapter via TOC scrolls to the correct position within the shared source file. Do NOT break the flat-chapter-list model — keep one list entry per TOC nav point.
 
-- [ ] `lib/Model/chapter_model.dart` — add `final String? contentSource;` and `final String? anchorFragment;` fields to `LocalChapterModel` (nullable, default null). Update constructor.
-- [ ] `lib/Helpers/epub_content_parser.dart` — in `_resolveContentBySource`, extract the fragment before stripping; return it alongside content. Modify `_flattenNavPoints` to populate `contentSource` and `anchorFragment` on each `LocalChapterModel`.
-- [ ] `lib/Helpers/pagination.dart` — in `PagingWidget` (or in `_HighlightablePage`), accept the `anchorFragment`. When non-empty, use it to compute an initial scroll offset: parse the HTML for the anchor element, measure its position, and scroll to it. Alternatively: wrap the target anchor with a scroll-to tag and use `Scrollable.ensureVisible`.
-- [ ] `lib/show_epub.dart` — pass `anchorFragment` from `chaptersList[_currentChapterIndex]` through to `PagingWidget`.
-- [ ] Verify: `fvm flutter analyze` (no automated tests; manual test with `book_nested.epub` in example app)
+- [x] `lib/Model/chapter_model.dart` — add `final String? contentSource;` and `final String? anchorFragment;` fields to `LocalChapterModel` (nullable, default null). Update constructor.
+- [x] `lib/Helpers/epub_content_parser.dart` — in `_resolveContentBySource`, extract the fragment before stripping; return it alongside content. Modify `_flattenNavPoints` to populate `contentSource` and `anchorFragment` on each `LocalChapterModel`.
+- [x] `lib/Helpers/pagination.dart` — in `PagingWidget` (or in `_HighlightablePage`), accept the `anchorFragment`. When non-empty, use it to compute an initial scroll offset: parse the HTML for the anchor element, measure its position, and scroll to it. Alternatively: wrap the target anchor with a scroll-to tag and use `Scrollable.ensureVisible`.
+- [x] `lib/show_epub.dart` — pass `anchorFragment` from `chaptersList[_currentChapterIndex]` through to `PagingWidget`.
+- [x] Verify: `fvm flutter analyze` (no automated tests; manual test with `book_nested.epub` in example app)
 
 ## Risks / Out of scope
 
