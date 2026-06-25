@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' show basename;
 
 import 'bookmark_service.dart';
+import 'settings_screen.dart';
 import 'shelf_service.dart';
 
 void main() async {
@@ -235,6 +236,15 @@ class _ShelfScreenState extends State<ShelfScreen> {
     );
   }
 
+  void _openSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(bookmarkService: _bookmarkService),
+      ),
+    );
+  }
+
   void _onTap(_ShelfEntry entry) {
     if (!entry.exists) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -280,6 +290,13 @@ class _ShelfScreenState extends State<ShelfScreen> {
       appBar: AppBar(
         title: const Text('7epubs'),
         actions: [
+          if (Platform.isMacOS)
+            IconButton(
+              key: const Key('settings-gear'),
+              icon: const Icon(Icons.settings),
+              tooltip: 'Settings',
+              onPressed: _openSettings,
+            ),
           IconButton(
             icon: const Icon(Icons.table_chart),
             tooltip: 'Open table example',
