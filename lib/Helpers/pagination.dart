@@ -338,23 +338,16 @@ class _PagingWidgetState extends State<PagingWidget> {
                               onPageFlip: (pageIndex, {bool? isForward}) {
                                 _currentPageIndex = pageIndex;
                                 widget.onPageFlip(pageIndex, pages.length);
-                                // Forward on last page → onLastPage
-                                if (isForward == true &&
-                                    _currentPageIndex == pages.length - 1) {
-                                  widget.onLastPage(pageIndex, pages.length);
-                                }
-                                // Backward on first page → onFirstPage
-                                if (isForward == false &&
-                                    _currentPageIndex == 0) {
-                                  widget.onFirstPageBack
-                                      ?.call(pageIndex, pages.length);
-                                }
                               },
                               onLastPageTap: () {
                                 final currentPage =
                                     _pageController.currentState?.currentPage ??
                                         _currentPageIndex;
                                 widget.onLastPage(currentPage, pages.length);
+                              },
+                              onFirstPageTap: () {
+                                widget.onFirstPageBack
+                                    ?.call(_currentPageIndex, pages.length);
                               },
                               backgroundColor: widget.backgroundColor,
                               lastPage: widget.lastWidget,

@@ -11,6 +11,7 @@ class PageFlipWidget extends StatefulWidget {
     this.lastPage,
     required this.onPageFlip,
     this.onLastPageTap,
+    this.onFirstPageTap,
   })  : assert(initialIndex < children.length,
             'initialIndex cannot be greater than children length'),
         super(key: key);
@@ -26,6 +27,9 @@ class PageFlipWidget extends StatefulWidget {
 
   /// Called when the user taps the right edge while already on the last page.
   final VoidCallback? onLastPageTap;
+
+  /// Called when the user taps the left edge while already on the first page.
+  final VoidCallback? onFirstPageTap;
 
   @override
   PageFlipWidgetState createState() => PageFlipWidgetState();
@@ -116,6 +120,8 @@ class PageFlipWidgetState extends State<PageFlipWidget>
               final ratio = e.localPosition.dx / dimens.maxWidth;
               if (ratio <= 0.2 && !_isFirstPage) {
                 previousPage();
+              } else if (ratio <= 0.2 && _isFirstPage) {
+                widget.onFirstPageTap?.call();
               } else if (ratio >= 0.8) {
                 if (!_isLastPage) {
                   nextPage();
