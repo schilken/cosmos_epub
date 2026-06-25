@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' show basename;
 
+import 'bookmark_service.dart';
 import 'shelf_service.dart';
 
 void main() async {
@@ -56,6 +57,7 @@ class ShelfScreen extends StatefulWidget {
 }
 
 class _ShelfScreenState extends State<ShelfScreen> {
+  final _bookmarkService = BookmarkService();
   List<_ShelfEntry> _books = [];
   bool _loading = true;
 
@@ -69,6 +71,9 @@ class _ShelfScreenState extends State<ShelfScreen> {
     final paths = ShelfService.getShelf();
     final entries = <_ShelfEntry>[];
     for (final path in paths) {
+      if (Platform.isMacOS) {
+        await _bookmarkService.resolveAndAccess(path);
+      }
       final exists = File(path).existsSync();
       String? progressText;
       if (exists) {
@@ -100,6 +105,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
 
   Future<void> _removeBook(String path) async {
     await ShelfService.removeBook(path);
+    await _bookmarkService.removeBookmark(path);
     await CosmosEpub.deleteBookProgress(path);
     CosmosEpub.removeAllHighlights(path);
     await _loadShelf();
@@ -126,6 +132,16 @@ class _ShelfScreenState extends State<ShelfScreen> {
 
     await ShelfService.addBook(path);
 
+    try {
+      await _bookmarkService.bookmarkFile(path);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to secure file access')),
+        );
+      }
+    }
+
     if (!mounted) return;
     try {
       await CosmosEpub.openLocalBook(
@@ -139,6 +155,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
         SnackBar(content: Text('Failed to open book: $e')),
       );
     }
+    await _bookmarkService.stopAccessing(path);
     await _loadShelf();
   }
 
@@ -161,6 +178,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
   Future<void> _openBook(String path) async {
     if (!mounted) return;
     try {
+      await _bookmarkService.resolveAndAccess(path);
       await CosmosEpub.openLocalBook(
         localPath: path,
         bookId: path,
@@ -172,6 +190,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
         SnackBar(content: Text('Failed to open book: $e')),
       );
     }
+    await _bookmarkService.stopAccessing(path);
     await _loadShelf();
   }
 
@@ -206,6 +225,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
       }
     }
     await CosmosEpub.deleteAllBooksProgress();
+    await _bookmarkService.clearAll();
     await ShelfService.clearShelf();
     await _loadShelf();
 

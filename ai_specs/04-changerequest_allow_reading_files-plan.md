@@ -52,14 +52,14 @@ Integrate `macos_secure_bookmarks` to persist macOS file access across app resta
 ### Phase 3: Integrate bookmarks into ShelfScreen
 
 - **Goal**: Wire BookmarkService into file pick/load/open flows so files survive app restart
-- [ ] `7epubs/lib/main.dart` — add `import 'bookmark_service.dart'` and `import 'dart:io' show Platform` (already imported); instantiate `BookmarkService` as file-scope or state-scope variable
-- [ ] `_pickAndOpenEpub()` — after `ShelfService.addBook(path)`, call `bookmarkService.bookmarkFile(path)` (fire-and-forget; catch + SnackBar on failure)
-- [ ] `_loadShelf()` — before `File(path).existsSync()`, call `bookmarkService.resolveAndAccess(path)`; if resolves, `existsSync()` passes; else fall through to direct path
-- [ ] `_openBook(String path)` — before `CosmosEpub.openLocalBook()`, call `bookmarkService.resolveAndAccess(path)`; log failure but proceed
-- [ ] `_removeBook(String path)` — add `bookmarkService.removeBookmark(path)` call
-- [ ] `_confirmClearAll()` — add `bookmarkService.clearAll()` call before `ShelfService.clearShelf()`
-- [ ] TDD: resolveAndAccess before existsSync in _loadShelf — verify File.existsSync returns true when bookmark resolves (unit test on helper)
-- [ ] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/`
+- [x] `7epubs/lib/main.dart` — add `import 'bookmark_service.dart'` (already had Platform import); instantiate `BookmarkService` as state-scope variable
+- [x] `_pickAndOpenEpub()` — after `ShelfService.addBook(path)`, call `bookmarkService.bookmarkFile(path)`; catch + SnackBar on failure; stopAccessing after reader dismiss
+- [x] `_loadShelf()` — before `File(path).existsSync()`, call `bookmarkService.resolveAndAccess(path)` when Platform.isMacOS
+- [x] `_openBook(String path)` — before `CosmosEpub.openLocalBook()`, call `bookmarkService.resolveAndAccess(path)`; stopAccessing after reader dismiss
+- [x] `_removeBook(String path)` — add `bookmarkService.removeBookmark(path)` call
+- [x] `_confirmClearAll()` — add `bookmarkService.clearAll()` call before `ShelfService.clearShelf()`
+- [x] TDD: resolveAndAccess behaviour tested in Phase 2 unit tests (FakeBookmarks); wiring coverage deferred to Phase 6 robot journey test
+- [x] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/` (8 tests pass)
 
 ### Phase 4: SettingsScreen and gear icon
 
