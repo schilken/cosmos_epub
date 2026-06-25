@@ -34,8 +34,8 @@ The bottom bar correctly shows the subchapter title because `_currentChapterInde
 
 - **Goal**: Right-edge tap on last page of a chapter triggers `nextChapter()`.
 
-- [x] `lib/PageFlip/page_flip_widget.dart` — add an `onLastPageTap` callback to `PageFlipWidget`. In the tap handler (line ~112), when `ratio >= 0.8 && _isLastPage`, invoke the new callback instead of silently dropping the tap.
-- [x] `lib/Helpers/pagination.dart` — pass the `onLastPageTap` from `PagingWidget` through to `PageFlipWidget`; wire it to `widget.onLastPage`.
+- [x] `lib/PageFlip/page_flip_widget.dart` — add an `onLastPageTap` callback to `PageFlipWidget`. In the tap handler (line ~112), when `ratio >= 0.8 && _isLastPage`, invoke the new callback instead of silently dropping the tap. Also fixed `didUpdateWidget` to use `widget.initialIndex` instead of hardcoded `0`. Added public `currentPage` getter.
+- [x] `lib/Helpers/pagination.dart` — pass the `onLastPageTap` from `PagingWidget` through to `PageFlipWidget`; wire it to `widget.onLastPage`. Also reads accurate currentPage from `PageFlipWidgetState` in `onLastPageTap` closure.
 - [x] Verify: `flutter analyze` with `fvm flutter analyze` (no tests exist per AGENTS.md)
 
 ### Phase 2: Fix TOC subchapter navigation (Bug 2)
