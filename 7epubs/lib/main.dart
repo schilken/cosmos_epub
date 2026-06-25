@@ -51,21 +51,36 @@ class _ShelfEntry {
 // ──── ShelfScreen ────
 
 class ShelfScreen extends StatefulWidget {
-  const ShelfScreen({Key? key}) : super(key: key);
+  final BookmarkService? bookmarkService;
+  final List<String>? initialShelf;
+
+  const ShelfScreen({Key? key, this.bookmarkService, this.initialShelf})
+      : super(key: key);
 
   @override
   State<ShelfScreen> createState() => _ShelfScreenState();
 }
 
 class _ShelfScreenState extends State<ShelfScreen> {
-  final _bookmarkService = BookmarkService();
+  late final BookmarkService _bookmarkService;
   List<_ShelfEntry> _books = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadShelf();
+    _bookmarkService = widget.bookmarkService ?? BookmarkService();
+    if (widget.initialShelf != null) {
+      _books = widget.initialShelf!
+          .map((path) => _ShelfEntry(
+                path: path,
+                exists: File(path).existsSync(),
+              ))
+          .toList();
+      _loading = false;
+    } else {
+      _loadShelf();
+    }
   }
 
   Future<void> _loadShelf() async {
@@ -310,7 +325,10 @@ class _ShelfScreenState extends State<ShelfScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              key: Key('shelf-loading'),
+              child: CircularProgressIndicator(),
+            )
           : _books.isEmpty
               ? const Center(
                   child: Text(
@@ -320,6 +338,7 @@ class _ShelfScreenState extends State<ShelfScreen> {
                   ),
                 )
               : ListView.builder(
+                  key: const Key('shelf-list'),
                   itemCount: _books.length,
                   itemBuilder: (ctx, i) {
                     final entry = _books[i];

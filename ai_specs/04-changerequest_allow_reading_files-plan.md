@@ -88,21 +88,23 @@ Integrate `macos_secure_bookmarks` to persist macOS file access across app resta
 ### Phase 5: Resource cleanup and polish
 
 - **Goal**: Call stopAccessing when reader is dismissed; ensure restart safety
-- [ ] `7epubs/lib/main.dart` — `_openBook()`: after `Navigator.push` to reader, call `.then((_) => bookmarkService.stopAccessing(path))` when reader is popped
-- [ ] `7epubs/lib/main.dart` — `_pickAndOpenEpub()`: same `.then()` pattern for stopAccessing
-- [ ] Edge case: if `_openBook()` is called while another reader is still open, stopAccessing only the reopened book's path (path-keyed, no global leak)
-- [ ] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/`
-- [ ] Manual: macOS: pick EPUB → open reader → dismiss reader → verify no resource leak warnings in console
+- [x] `7epubs/lib/main.dart` — `_openBook()`: await openLocalBook + stopAccessing after reader popped (implemented in Phase 3)
+- [x] `7epubs/lib/main.dart` — `_pickAndOpenEpub()`: await openLocalBook + stopAccessing after reader popped (implemented in Phase 3)
+- [x] Edge case: path-keyed stopAccessing prevents cross-contamination between concurrent readers
+- [x] Verify: `fvm flutter analyze` && `fvm flutter test` in `7epubs/` (12 tests pass)
+- [ ] Manual verification deferred — requires macOS sandbox environment
 
 ### Phase 6: Robot journey test — full pick-reopen cycle
 
 - **Goal**: One end-to-end robot test proving bookmark persistence across simulated app restart
-- [ ] `7epubs/test/journeys/macos_bookmark_journey_test.dart` — create robot journey:
-  - Setup: FakeFilePicker returns `/tmp/test.epub`; FakeBookmarkService with controlled bookmark data; FakeShelfService with preset entries
+- [x] `7epubs/test/journeys/macos_bookmark_journey_test.dart` — create robot journey:
+  - Setup: BookmarkTestHarness with FakeSecureBookmarks, FakeStorage; creates real temp test file
   - Journey: pick file → assert bookmark created → simulate restart (re-instantiate services) → assert bookmark resolves → open book
   - Required selectors: `Key('shelf-list')` on ListView, `Key('shelf-loading')` on loading indicator, `Key('settings-gear')` on gear icon
-  - Required seams: `FakeSecureBookmarks` with `bookmark()` returning test string, `resolveBookmark()` returning mock File; fake `startAccessingSecurityScopedResource` returning true
-- [ ] Verify: `fvm flutter test test/journeys/macos_bookmark_journey_test.dart` in `7epubs/`
+  - Required seams: `FakeSecureBookmarks` with `bookmark()` and `resolveBookmark()`; `FakeStorage` for bookmark persistence
+  - `7epubs/test/harness/bookmark_harness.dart` — harness with FakeSecureBookmarks + FakeStorage
+  - Added optional `bookmarkService` and `initialShelf` params to `ShelfScreen` for testability
+- [x] Verify: `fvm flutter test test/journeys/macos_bookmark_journey_test.dart` in `7epubs/` (3 journey tests pass)
 
 ## Risks / Out of scope
 
