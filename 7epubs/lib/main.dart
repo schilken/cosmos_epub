@@ -200,22 +200,6 @@ class _ShelfScreenState extends State<ShelfScreen> {
     }
   }
 
-  Future<void> _openNestedEpub() async {
-    if (!mounted) return;
-    try {
-      await CosmosEpub.openAssetBook(
-        assetPath: 'assets/book_nested.epub',
-        context: context,
-        bookId: 'book_nested',
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open nested book: $e')),
-      );
-    }
-  }
-
   Future<void> _openBook(String path) async {
     if (!mounted) return;
     try {
@@ -347,11 +331,6 @@ class _ShelfScreenState extends State<ShelfScreen> {
             icon: const Icon(Icons.table_chart),
             tooltip: 'Open table example',
             onPressed: _openTableExample,
-          ),
-          IconButton(
-            icon: const Icon(Icons.book),
-            tooltip: 'Open nested book',
-            onPressed: _openNestedEpub,
           ),
           IconButton(
             icon: const Icon(Icons.delete_forever),

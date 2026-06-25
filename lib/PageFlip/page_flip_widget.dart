@@ -108,35 +108,22 @@ class PageFlipWidgetState extends State<PageFlipWidget>
     return LayoutBuilder(
       builder: (context, dimens) => Listener(
         behavior: HitTestBehavior.translucent,
-        onPointerDown: (e) {
-          _tapDownPos = e.localPosition;
-          debugPrint(
-              '[Bug1] PFW onPointerDown: pos=${e.localPosition}, isAnim=${_controller.isAnimating}, isLast=$_isLastPage, page=$_currentPage, effLen=${_effectiveChildren.length}');
-        },
+        onPointerDown: (e) => _tapDownPos = e.localPosition,
         onPointerUp: (e) {
-          debugPrint(
-              '[Bug1] PFW onPointerUp: tapDown=$_tapDownPos, localPos=${e.localPosition}, isAnim=${_controller.isAnimating}');
           if (_tapDownPos != null && !_controller.isAnimating) {
             final delta = (e.localPosition - _tapDownPos!).distance;
-            debugPrint('[Bug1] PFW onPointerUp: delta=$delta');
             if (delta < 18) {
               final ratio = e.localPosition.dx / dimens.maxWidth;
-              debugPrint(
-                  '[Bug1] PFW onPointerUp: ratio=$ratio, isFirst=$_isFirstPage, isLast=$_isLastPage');
               if (ratio <= 0.2 && !_isFirstPage) {
                 previousPage();
               } else if (ratio >= 0.8) {
                 if (!_isLastPage) {
                   nextPage();
                 } else {
-                  debugPrint('[Bug1] onLastPageTap invoked');
                   widget.onLastPageTap?.call();
                 }
               }
             }
-          } else {
-            debugPrint(
-                '[Bug1] PFW onPointerUp SKIPPED: tapDownNull=${_tapDownPos == null}, isAnim=${_controller.isAnimating}');
           }
           _tapDownPos = null;
         },

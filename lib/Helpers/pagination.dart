@@ -225,8 +225,6 @@ class _PagingWidgetState extends State<PagingWidget> {
     // (soft hyphens break substring containment checks).
     _anchorPageIndex = -1;
     final anchor = widget.anchorFragment;
-    debugPrint(
-        '[Bug2] _paginate: anchor="$anchor", _pageHtmls=${_pageHtmls.length}');
     if (anchor != null && anchor.isNotEmpty && _pageHtmls.isNotEmpty) {
       for (int i = 0; i < _pageHtmls.length; i++) {
         if (_pageHtmls[i].contains('id="$anchor"') ||
@@ -234,26 +232,16 @@ class _PagingWidgetState extends State<PagingWidget> {
             _pageHtmls[i].contains('name="$anchor"') ||
             _pageHtmls[i].contains("name='$anchor'")) {
           _anchorPageIndex = i;
-          debugPrint('[Bug2] _paginate: found anchor (direct) at page $i');
           break;
         }
       }
       if (_anchorPageIndex < 0) {
         final anchorPat = RegExp('id=["\']$anchor["\']|name=["\']$anchor["\']');
-        final foundInOrig = resolvedHtml.contains(anchorPat);
-        debugPrint(
-            '[Bug2] _paginate: anchor in original HTML=$foundInOrig, htmlLen=${resolvedHtml.length}');
-        if (foundInOrig) {
-          // Use un-hyphenated page HTMLs for text matching
+        if (resolvedHtml.contains(anchorPat)) {
           _anchorPageIndex =
               _findAnchorPageByText(resolvedHtml, anchor, _pageHtmls);
-          debugPrint(
-              '[Bug2] _paginate: text-based fallback result=$_anchorPageIndex');
         }
       }
-    }
-    if (_anchorPageIndex < 0 && anchor != null && anchor.isNotEmpty) {
-      debugPrint('[Bug2] _paginate: anchor "$anchor" NOT found in any page');
     }
 
     // Insert soft hyphens AFTER pagination and anchor detection
@@ -287,22 +275,16 @@ class _PagingWidgetState extends State<PagingWidget> {
           doc.querySelector('[name="$anchor"]') ??
           doc.querySelector("[id='$anchor']") ??
           doc.querySelector("[name='$anchor']");
-      debugPrint('[Bug2] _findAnchorPageByText: elem found=${elem != null}');
       if (elem == null) return -1;
 
       final anchorText = elem.text.trim();
-      debugPrint(
-          '[Bug2] _findAnchorPageByText: anchorText="${anchorText.length > 60 ? anchorText.substring(0, 60) : anchorText}"...');
       if (anchorText.isEmpty) return -1;
 
       final searchText =
           anchorText.length > 40 ? anchorText.substring(0, 40) : anchorText;
       for (int i = 0; i < pageHtmls.length; i++) {
         final pagePlain = html_parser.parse(pageHtmls[i]).body?.text ?? '';
-        if (pagePlain.contains(searchText)) {
-          debugPrint('[Bug2] _findAnchorPageByText: matched text in page $i');
-          return i;
-        }
+        if (pagePlain.contains(searchText)) return i;
       }
       final normalized = searchText.replaceAll(RegExp(r'\s+'), ' ');
       for (int i = 0; i < pageHtmls.length; i++) {
@@ -312,15 +294,9 @@ class _PagingWidgetState extends State<PagingWidget> {
                 ?.text
                 ?.replaceAll(RegExp(r'\s+'), ' ') ??
             '';
-        if (pagePlain.contains(normalized)) {
-          debugPrint('[Bug2] _findAnchorPageByText: matched (norm) in page $i');
-          return i;
-        }
+        if (pagePlain.contains(normalized)) return i;
       }
-      debugPrint('[Bug2] _findAnchorPageByText: no page matched anchor text');
-    } catch (e) {
-      debugPrint('[Bug2] _findAnchorPageByText error: $e');
-    }
+    } catch (_) {}
     return -1;
   }
 
@@ -375,8 +351,6 @@ class _PagingWidgetState extends State<PagingWidget> {
                                 }
                               },
                               onLastPageTap: () {
-                                debugPrint(
-                                    '[Bug1] PagingWidget onLastPageTap: _currentPageIndex=$_currentPageIndex, pages.length=${pages.length}');
                                 final currentPage =
                                     _pageController.currentState?.currentPage ??
                                         _currentPageIndex;
