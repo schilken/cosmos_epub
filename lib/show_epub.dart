@@ -1,9 +1,14 @@
-import 'dart:io' show Platform;
+import 'dart:convert';
+import 'dart:io' show File, Platform;
 
+import 'package:cosmos_epub/Component/notes_list_screen.dart';
 import 'package:cosmos_epub/Helpers/context_extensions.dart';
 import 'package:cosmos_epub/Helpers/epub_content_parser.dart';
 import 'package:cosmos_epub/Helpers/functions.dart';
+import 'package:cosmos_epub/Helpers/note_exporter.dart';
+import 'package:cosmos_epub/Model/highlight_model.dart';
 import 'package:epubx/epubx.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -868,7 +873,56 @@ class ShowEpubState extends State<ShowEpub> {
                                     )),
                               SizedBox(
                                 width: 10.w,
-                              )
+                              ),
+                              PopupMenuButton<String>(
+                                key: const Key('reader_overflow_menu'),
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  color: fontColor,
+                                  size: 20.h,
+                                ),
+                                onSelected: (value) async {
+                                  switch (value) {
+                                    case 'notes':
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => NotesListScreen(
+                                            bookId: bookId,
+                                          ),
+                                        ),
+                                      );
+                                    case 'export_md':
+                                      await _handleExport(
+                                          'md',
+                                          () => notesToMarkdown(
+                                              bookTitle,
+                                              HighlightStorage.getBookNotes(
+                                                  bookId)));
+                                    case 'export_json':
+                                      await _handleExport(
+                                          'json',
+                                          () => notesToJson(
+                                              bookTitle,
+                                              HighlightStorage.getBookNotes(
+                                                  bookId)));
+                                  }
+                                },
+                                itemBuilder: (_) => [
+                                  const PopupMenuItem(
+                                    value: 'notes',
+                                    child: Text('Notes'),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'export_md',
+                                    child: Text('Export Markdown…'),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'export_json',
+                                    child: Text('Export JSON…'),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -878,6 +932,63 @@ class ShowEpubState extends State<ShowEpub> {
                 ),
               ),
             )));
+  }
+
+  Future<void> _handleExport(
+      String extension, String Function() buildContent) async {
+    final content = buildContent();
+
+    if (content.isEmpty || (!content.contains('---'))) {
+      // No notes (only header)
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No notes to export')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final safeTitle = bookTitle
+          .replaceAll(RegExp(r'[^a-zA-Z0-9_\-\s]'), '')
+          .trim()
+          .replaceAll(RegExp(r'\s+'), '_');
+      final now = DateTime.now();
+      final dateStr =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+      final fileName = 'notes_${safeTitle}_$dateStr.$extension';
+
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Notes',
+        fileName: fileName,
+        bytes: utf8.encode(content),
+      );
+
+      if (path == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Export cancelled')),
+          );
+        }
+        return;
+      }
+
+      final file = File(path);
+      await file.writeAsBytes(utf8.encode(content));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Notes exported to ${file.uri.pathSegments.last}')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
   }
 
   openTableOfContents() async {

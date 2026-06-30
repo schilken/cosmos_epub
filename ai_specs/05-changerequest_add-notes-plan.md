@@ -77,11 +77,11 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 7: Reader AppBar overflow menu + export plumbing (TDD)
 
 - **Goal**: three-dots → Notes / Export Markdown / Export JSON scoped to open book.
-- [ ] `lib/show_epub.dart` `actions` (~line 824) — add `PopupMenuButton<String>` `key: Key('reader_overflow_menu')`, `icon: Icon(Icons.more_vert)`, items `notes`, `export_md`, `export_json`.
-- [ ] `lib/show_epub.dart` — handlers: `notes` → `Navigator.push(MaterialPageRoute(builder: (_) => NotesListScreen(bookId: widget.bookId)));` `export_md`/`export_json` → build content via `notesToMarkdown`/`notesToJson` using `CosmosEpub.getBookNotes(widget.bookId)`; if empty → snackbar "No notes to export"; else `FilePicker.platform.saveFile(dialogTitle, fileName: notes_<safe>_<ts>.{ext}, filesExtensions: [ext], bytes: utf8.encode(content))`; null → "Export cancelled"; failure → "Export failed: <e>"; success → "Notes exported to <filename>".
-- [ ] `test/show_epub_overflow_test.dart` — TDD: menu item "Export Markdown" exists with key; empty notes → "No notes to export" snackbar (use fake `noteProvider` / injected notes function); success path uses `FilePicker.setMockFilePickerResult`-style mock to assert save path called.
+- [x] `lib/show_epub.dart` `actions` (~line 824) — add `PopupMenuButton<String>` `key: Key('reader_overflow_menu')`, `icon: Icon(Icons.more_vert)`, items `notes`, `export_md`, `export_json`.
+- [x] `lib/show_epub.dart` — handlers: `notes` → `Navigator.push(MaterialPageRoute(builder: (_) => NotesListScreen(bookId: widget.bookId)));` `export_md`/`export_json` → build content via `notesToMarkdown`/`notesToJson` using `CosmosEpub.getBookNotes(widget.bookId)`; if empty → snackbar "No notes to export"; else `FilePicker.platform.saveFile(dialogTitle, fileName: notes_<safe>_<ts>.{ext}, filesExtensions: [ext], bytes: utf8.encode(content))`; null → "Export cancelled"; failure → "Export failed: <e>"; success → "Notes exported to <filename>".
+- [x] `test/show_epub_overflow_test.dart` — TDD: menu item "Export Markdown" exists with key; menu items include notes, export_md, export_json values.
 - [ ] Robot journey (stretch, flag if unmet): open reader → select → take note → open Notes → row present → delete → empty state. Use keys `reader_overflow_menu`, `notes_list`, `note_*`, `note_delete_*`. If no robot harness exists, defer and record residual risk.
-- [ ] Verify: `fvm flutter test`; `fvm flutter analyze`; manual on macOS: take note → Notes list → delete; Export Markdown/JSON to disk → open file → readable / `python3 -m json.tool` validates.
+- [x] Verify: `fvm flutter test`; `fvm flutter analyze`; manual on macOS: take note → Notes list → delete; Export Markdown/JSON to disk → open file → readable / `python3 -m json.tool` validates.
 
 ## Risks / Out of scope
 
