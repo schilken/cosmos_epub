@@ -10,6 +10,7 @@ class HighlightModel {
   final int endIndex;
   final String selectedText;
   final int colorValue;
+  final String? noteText;
 
   HighlightModel({
     required this.id,
@@ -20,7 +21,10 @@ class HighlightModel {
     required this.endIndex,
     required this.selectedText,
     required this.colorValue,
+    this.noteText,
   });
+
+  bool get isNote => noteText != null && noteText!.trim().isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -31,6 +35,7 @@ class HighlightModel {
         'endIndex': endIndex,
         'selectedText': selectedText,
         'colorValue': colorValue,
+        if (noteText != null) 'noteText': noteText,
       };
 
   factory HighlightModel.fromJson(Map<String, dynamic> json) => HighlightModel(
@@ -42,6 +47,9 @@ class HighlightModel {
         endIndex: json['endIndex'] ?? 0,
         selectedText: json['selectedText'] ?? '',
         colorValue: json['colorValue'],
+        noteText: (json['noteText'] as String?)?.isEmpty ?? false
+            ? null
+            : json['noteText'] as String?,
       );
 
   static String generateId() =>
@@ -57,7 +65,8 @@ class HighlightModel {
 
 class HighlightStorage {
   static const _key = 'cosmos_highlights_v2';
-  static final _gs = GetStorage();
+  static GetStorage Function() storageProvider = () => GetStorage();
+  static GetStorage get _gs => storageProvider();
 
   static List<HighlightModel> getParagraphHighlights(
       String bookId, int chapterIndex, String paragraphKey) {
@@ -94,6 +103,14 @@ class HighlightStorage {
     final all = _readAll();
     all.removeWhere((h) => h.id == id);
     _writeAll(all);
+  }
+
+  static List<HighlightModel> getBookNotes(String bookId) {
+    return _readAll().where((h) => h.bookId == bookId && h.isNote).toList();
+  }
+
+  static void removeNote(String id) {
+    removeHighlight(id);
   }
 
   static void removeAllForBook(String bookId) {
