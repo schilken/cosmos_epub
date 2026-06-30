@@ -36,10 +36,10 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 2: Note exporter (pure helpers, TDD)
 
 - **Goal**: markdown + JSON serialization, deterministic aside from clock.
-- [ ] `lib/Helpers/note_exporter.dart` — `String notesToMarkdown(String bookTitle, List<HighlightModel> notes, {DateTime Function() now = DateTime.now})`; section per note (`## Chapter N` + `>` quote of selectedText + note body + `---`).
-- [ ] `lib/Helpers/note_exporter.dart` — `String notesToJson(String bookTitle, List<HighlightModel> notes, {DateTime Function() now})` → `jsonEncode({book, exportedAt: now().toIso8601String(), notes: [...]})` with `{chapterIndex, selectedText, noteText, paragraphKey, startIndex, endIndex}`.
-- [ ] `test/helpers/note_exporter_test.dart` — TDD: empty list → minimal valid output; one note → expected markdown shape; JSON `jsonDecode`s with matching `notes.length`; multi/chapter ordering; unicode; injected `now` keeps output deterministic.
-- [ ] Verify: `fvm flutter test test/helpers/note_exporter_test.dart`.
+- [x] `lib/Helpers/note_exporter.dart` — `String notesToMarkdown(String bookTitle, List<HighlightModel> notes, {DateTime Function() now = DateTime.now})`; section per note (`## Chapter N` + `>` quote of selectedText + note body + `---`).
+- [x] `lib/Helpers/note_exporter.dart` — `String notesToJson(String bookTitle, List<HighlightModel> notes, {DateTime Function() now})` → `jsonEncode({book, exportedAt: now().toIso8601String(), notes: [...]})` with `{chapterIndex, selectedText, noteText, paragraphKey, startIndex, endIndex}`.
+- [x] `test/helpers/note_exporter_test.dart` — TDD: empty list → minimal valid output; one note → expected markdown shape; JSON `jsonDecode`s with matching `notes.length`; multi/chapter ordering; unicode; injected `now` keeps output deterministic.
+- [x] Verify: `fvm flutter test test/helpers/note_exporter_test.dart`.
 
 ### Phase 3: Toolbar palette + note icon (UI behavior, TDD)
 
