@@ -531,7 +531,98 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     );
   }
 
-  @override
+  void _takeNote() {
+    if (_lastSelectedText.isEmpty || widget.bookId.isEmpty) return;
+
+    showDialog<String?>(
+      context: context,
+      builder: (ctx) {
+        var noteText = '';
+        var saveEnabled = false;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Add Note'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _lastSelectedText,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    autofocus: true,
+                    maxLines: 5,
+                    minLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your note...',
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (v) {
+                      noteText = v;
+                      setDialogState(() {
+                        saveEnabled = v.trim().isNotEmpty;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed:
+                      saveEnabled ? () => Navigator.pop(ctx, noteText) : null,
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((result) {
+      if (result == null || result.trim().isEmpty) return;
+
+      final range = _resolveSelectionRange(_lastSelectedText);
+      if (range == null) return;
+
+      final builtText = _lastBuilder?.lastBuiltCleanText ?? '';
+      final pKey = HighlightModel.makeParagraphKey(builtText);
+
+      final highlight = HighlightModel(
+        id: HighlightModel.generateId(),
+        bookId: widget.bookId,
+        chapterIndex: widget.chapterIndex,
+        paragraphKey: pKey,
+        startIndex: range.start,
+        endIndex: range.end,
+        selectedText: range.cleanSelected,
+        colorValue: noteAnchorColor.toARGB32(),
+        noteText: result.trim(),
+      );
+
+      try {
+        HighlightStorage.addOrUpdate(highlight);
+        setState(() {});
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not save note')),
+          );
+        }
+      }
+
+      FocusManager.instance.primaryFocus?.unfocus();
+    });
+  }
+
   Widget build(BuildContext context) {
     // Section title page — centered title, no content
     if (widget.pageHtml.isEmpty && widget.chapterTitle.isNotEmpty) {
@@ -587,7 +678,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
               FocusManager.instance.primaryFocus?.unfocus();
             },
             onTakeNote: () {
-              // Phase 4 will implement _takeNote()
+              _takeNote();
             },
             selectionAvailable: _lastSelectedText.trim().isNotEmpty,
           );

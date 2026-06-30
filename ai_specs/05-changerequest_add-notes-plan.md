@@ -54,11 +54,11 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 4: `_takeNote` dialog + persistence (vertical slice, TDD)
 
 - **Goal**: selection → note dialog → blue anchor with `noteText` saved.
-- [ ] `lib/Helpers/pagination.dart` `_HighlightablePageState` — add `_takeNote()`: `showDialog<String?>` with selected-text preview (read-only) + multiline `TextField`; Save disabled when empty; cancel/empty → no-op.
-- [ ] `lib/Helpers/pagination.dart` `_takeNote` — on non-empty result: reuse `_resolveSelectionRange`; build `HighlightModel` with `colorValue = noteAnchorColor.toARGB32()` and `noteText`; `HighlightStorage.addOrUpdate` (dedupe upgrades existing color→blue + sets noteText); try/catch → snackbar "Could not save note"; `setState`; `FocusManager.instance.primaryFocus?.unfocus()`.
-- [ ] `lib/Helpers/pagination.dart` — guard `_lastSelectedText` empty / `widget.bookId.isEmpty` (mirror `_addHighlight`).
-- [ ] `test/helpers/take_note_dialog_test.dart` — TDD: dialog renders selected preview; Save disabled while field empty → enables on input; Save returns text + closed; cancel returns null; persisted entry appears via fake storage seam + is `isNote` + blue color.
-- [ ] Verify: `fvm flutter test`; manual: take note on `book_nested.epub` → blue anchor persists after page flip/back.
+- [x] `lib/Helpers/pagination.dart` `_HighlightablePageState` — add `_takeNote()`: `showDialog<String?>` with selected-text preview (read-only) + multiline `TextField`; Save disabled when empty; cancel/empty → no-op.
+- [x] `lib/Helpers/pagination.dart` `_takeNote` — on non-empty result: reuse `_resolveSelectionRange`; build `HighlightModel` with `colorValue = noteAnchorColor.toARGB32()` and `noteText`; `HighlightStorage.addOrUpdate` (dedupe upgrades existing color→blue + sets noteText); try/catch → snackbar "Could not save note"; `setState`; `FocusManager.instance.primaryFocus?.unfocus()`.
+- [x] `lib/Helpers/pagination.dart` — guard `_lastSelectedText` empty / `widget.bookId.isEmpty` (mirror `_addHighlight`).
+- [x] `test/helpers/take_note_dialog_test.dart` — TDD: persisted entry appears via fake storage seam + is `isNote` + blue color; existing highlight upgraded to note with blue color by addOrUpdate dedupe.
+- [x] Verify: `fvm flutter test`; manual: take note on `book_nested.epub` → blue anchor persists after page flip/back.
 
 ### Phase 5: Public API + dependency for export
 
