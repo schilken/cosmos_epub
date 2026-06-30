@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 const highlightColors = [
   Color(0xFFFFEB3B), // Yellow
   Color(0xFF81C784), // Green
-  Color(0xFF64B5F6), // Blue
   Color(0xFFE57373), // Red
-  Color(0xFFFFAB91), // Orange
-  Color(0xFFCE93D8), // Purple
 ];
+
+const noteAnchorColor = Color(0xFF64B5F6);
 
 class HighlightToolbar extends StatelessWidget {
   final VoidCallback onDismiss;

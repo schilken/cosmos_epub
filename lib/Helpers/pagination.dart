@@ -456,17 +456,39 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   void _addHighlight(String selectedText, Color color) {
     if (selectedText.isEmpty || widget.bookId.isEmpty) return;
 
+    final range = _resolveSelectionRange(selectedText);
+    if (range == null) return;
+
+    final builtText = _lastBuilder?.lastBuiltCleanText ?? '';
+    final pKey = HighlightModel.makeParagraphKey(builtText);
+
+    final highlight = HighlightModel(
+      id: HighlightModel.generateId(),
+      bookId: widget.bookId,
+      chapterIndex: widget.chapterIndex,
+      paragraphKey: pKey,
+      startIndex: range.start,
+      endIndex: range.end,
+      selectedText: range.cleanSelected,
+      colorValue: color.toARGB32(),
+    );
+
+    HighlightStorage.addOrUpdate(highlight);
+    setState(() {});
+  }
+
+  ({int start, int end, String cleanSelected})? _resolveSelectionRange(
+      String selectedText) {
     final cleanSelected = selectedText
         .replaceAll('\u00AD', '')
         .replaceAll('-\n', '')
         .replaceAll('\n', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    if (cleanSelected.isEmpty) return;
+    if (cleanSelected.isEmpty) return null;
 
     final builtText = _lastBuilder?.lastBuiltCleanText ?? '';
 
-    // Search within the tapped paragraph first (accurate for duplicate words)
     final searchText = cleanSelected.replaceAll('-', '');
     final searchStart = _tappedParagraphEnd > 0 ? _tappedParagraphStart : 0;
     final searchEnd =
@@ -478,7 +500,6 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     var localIdx = paragraphText.indexOf(searchText);
     var idx = localIdx != -1 ? searchStart + localIdx : -1;
 
-    // Fallback: search full page
     if (idx == -1) {
       idx = builtText.indexOf(cleanSelected);
     }
@@ -488,7 +509,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     if (idx == -1) {
       final normalizedBuilt = builtText.replaceAll(RegExp(r'\s+'), ' ');
       final normalizedIdx = normalizedBuilt.indexOf(cleanSelected);
-      if (normalizedIdx == -1) return;
+      if (normalizedIdx == -1) return null;
       int origPos = 0, normPos = 0;
       while (normPos < normalizedIdx && origPos < builtText.length) {
         if (RegExp(r'\s').hasMatch(builtText[origPos])) {
@@ -503,21 +524,11 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       idx = origPos;
     }
 
-    final pKey = HighlightModel.makeParagraphKey(builtText);
-
-    final highlight = HighlightModel(
-      id: HighlightModel.generateId(),
-      bookId: widget.bookId,
-      chapterIndex: widget.chapterIndex,
-      paragraphKey: pKey,
-      startIndex: idx,
-      endIndex: idx + cleanSelected.length,
-      selectedText: cleanSelected,
-      colorValue: color.toARGB32(),
+    return (
+      start: idx,
+      end: idx + cleanSelected.length,
+      cleanSelected: cleanSelected
     );
-
-    HighlightStorage.addOrUpdate(highlight);
-    setState(() {});
   }
 
   @override
@@ -575,6 +586,10 @@ class _HighlightablePageState extends State<_HighlightablePage> {
               _addHighlight(_lastSelectedText, color);
               FocusManager.instance.primaryFocus?.unfocus();
             },
+            onTakeNote: () {
+              // Phase 4 will implement _takeNote()
+            },
+            selectionAvailable: _lastSelectedText.trim().isNotEmpty,
           );
         },
         child: Container(
@@ -606,22 +621,27 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   }
 }
 
-/// Page-level toolbar with highlight colors + copy + select all.
+/// Page-level toolbar with highlight colors + note + copy + select all.
 class _PageToolbar extends StatelessWidget {
   final TextSelectionToolbarAnchors anchor;
   final VoidCallback onCopy;
   final VoidCallback onSelectAll;
   final void Function(Color) onColorSelected;
+  final VoidCallback onTakeNote;
+  final bool selectionAvailable;
 
   const _PageToolbar({
     required this.anchor,
     required this.onCopy,
     required this.onSelectAll,
     required this.onColorSelected,
+    required this.onTakeNote,
+    required this.selectionAvailable,
   });
 
   @override
   Widget build(BuildContext context) {
+    final noteIconColor = selectionAvailable ? Colors.white70 : Colors.white24;
     final children = <Widget>[
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -643,6 +663,19 @@ class _PageToolbar extends StatelessWidget {
                       ),
                     ),
                   )),
+              Container(
+                width: 1,
+                height: 20,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                color: Colors.white24,
+              ),
+              GestureDetector(
+                onTap: selectionAvailable ? onTakeNote : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Icon(Icons.note_add, size: 20, color: noteIconColor),
+                ),
+              ),
               Container(
                 width: 1,
                 height: 20,

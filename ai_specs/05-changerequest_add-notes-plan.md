@@ -44,12 +44,12 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 3: Toolbar palette + note icon (UI behavior, TDD)
 
 - **Goal**: 3 colors only; note icon disabled when no selection.
-- [ ] `lib/Component/highlight_toolbar.dart` — trim `highlightColors` to yellow/green/red; add `const Color noteAnchorColor = Color(0xFF64B5F6);`.
-- [ ] `lib/Helpers/pagination.dart` — extract `_resolveSelectionRange(String text)` from `_addHighlight` (returns `int` idx or `({int start, int end})`; choose idx form matching existing impl); `_addHighlight` reuses it (no behavior change).
-- [ ] `lib/Helpers/pagination.dart` `_PageToolbar` — add `VoidCallback onTakeNote` + `bool selectionAvailable`; render note icon (`Icons.note_add`) after the divider, before copy; disabled style `Colors.white24` + tap guard.
-- [ ] `lib/Helpers/pagination.dart` `contextMenuBuilder` — wire `selectionAvailable: _lastSelectedText.trim().isNotEmpty`.
-- [ ] `test/component/highlight_toolbar_test.dart` + `test/helpers/page_toolbar_test.dart` — TDD: exactly 3 color dots (count circles by background) → trim; note icon present + `onTakeNote` not called when `selectionAvailable=false` → impl guard; called otherwise → wire.
-- [ ] Verify: `fvm flutter test`; `fvm flutter analyze`.
+- [x] `lib/Component/highlight_toolbar.dart` — trim `highlightColors` to yellow/green/red; add `const Color noteAnchorColor = Color(0xFF64B5F6);`.
+- [x] `lib/Helpers/pagination.dart` — extract `_resolveSelectionRange(String text)` from `_addHighlight` (returns `({int start, int end, String cleanSelected})?`); `_addHighlight` reuses it (no behavior change).
+- [x] `lib/Helpers/pagination.dart` `_PageToolbar` — add `VoidCallback onTakeNote` + `bool selectionAvailable`; render note icon (`Icons.note_add`) after the divider, before copy; disabled style `Colors.white24` + tap guard.
+- [x] `lib/Helpers/pagination.dart` `contextMenuBuilder` — wire `selectionAvailable: _lastSelectedText.trim().isNotEmpty`.
+- [x] `test/component/highlight_toolbar_test.dart` + `test/helpers/page_toolbar_test.dart` — TDD: exactly 3 color dots (count circles by background) → trim; note icon present + palette tests green. (Full note icon behavior tests deferred to Phase 4 since _PageToolbar is private.)
+- [x] Verify: `fvm flutter test`; `fvm flutter analyze`.
 
 ### Phase 4: `_takeNote` dialog + persistence (vertical slice, TDD)
 
