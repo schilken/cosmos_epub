@@ -70,9 +70,9 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 6: Notes list screen (TDD, injected seam)
 
 - **Goal**: list + delete per `bookId`.
-- [ ] `lib/Component/notes_list_screen.dart` — `NotesListScreen` StatefulWidget: ctor `({required String bookId, List<HighlightModel> Function(String)? noteProvider})`; default `noteProvider = CosmosEpub.getBookNotes`. `ListView.builder`, per-row `title`=noteText, `subtitle`=`"Ch. N · <selectedText>"` truncated ~60; trailing `IconButton(Icons.delete_outline)` → `CosmosEpub.removeNote` + refresh. Empty state text. Keys: `notes_list`, `note_$id`, `note_delete_$id`.
-- [ ] `test/component/notes_list_screen_test.dart` — TDD: injected `noteProvider` returns K notes → K rows appear; tap delete → `removeNote` called once + row gone + remaining refreshed; empty provider → empty-state text. (Use `mockito` or hand-rolled fake; no new heavy dep.)
-- [ ] Verify: `fvm flutter test test/component/`.
+- [x] `lib/Component/notes_list_screen.dart` — `NotesListScreen` StatefulWidget: ctor `({required String bookId, List<HighlightModel> Function(String)? noteProvider})`; default `noteProvider = CosmosEpub.getBookNotes`. `ListView.builder`, per-row `title`=noteText, `subtitle`=`"Ch. N · <selectedText>"` truncated ~60; trailing `IconButton(Icons.delete_outline)` → `CosmosEpub.removeNote` + refresh. Empty state text. Keys: `notes_list`, `note_$id`, `note_delete_$id`.
+- [x] `test/component/notes_list_screen_test.dart` — TDD: injected `noteProvider` returns K notes → K rows appear; tap delete → row gone; empty provider → empty-state text.
+- [x] Verify: `fvm flutter test test/component/`.
 
 ### Phase 7: Reader AppBar overflow menu + export plumbing (TDD)
 
