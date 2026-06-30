@@ -32,6 +32,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   flutter_svg: ^2.2.3
   fading_edge_scrollview: ^4.1.1
+  file_picker: ^8.0.0
 
 dev_dependencies:
   flutter_test:

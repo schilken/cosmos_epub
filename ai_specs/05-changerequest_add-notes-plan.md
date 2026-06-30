@@ -63,9 +63,9 @@ Add note-anchoring on text selections (blue highlight + free-text) reusing `High
 ### Phase 5: Public API + dependency for export
 
 - **Goal**: expose note accessors; library can run `file_picker.saveFile`.
-- [ ] `lib/pubspec.yaml` — add `file_picker: ^8.0.0`; `fvm flutter pub get`.
-- [ ] `lib/cosmos_epub.dart` — add `static List<HighlightModel> getBookNotes(String bookId)` (→ `HighlightStorage.getBookNotes`); `static void removeNote(String id)` (→ removeHighlight alias).
-- [ ] Verify: `fvm flutter analyze`; `7epubs` example builds (`cd 7epubs && fvm flutter pub get`).
+- [x] `lib/pubspec.yaml` — add `file_picker: ^8.0.0`; `fvm flutter pub get`.
+- [x] `lib/cosmos_epub.dart` — add `static List<HighlightModel> getBookNotes(String bookId)` (→ `HighlightStorage.getBookNotes`); `static void removeNote(String id)` (→ removeHighlight alias).
+- [x] Verify: `fvm flutter analyze`; `7epubs` example builds (`cd 7epubs && fvm flutter pub get`).
 
 ### Phase 6: Notes list screen (TDD, injected seam)
 

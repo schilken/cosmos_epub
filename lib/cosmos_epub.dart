@@ -191,6 +191,18 @@ class CosmosEpub {
     HighlightStorage.removeAllForBook(bookId);
   }
 
+  // ──── Note Management ────
+
+  /// Get all notes for a book.
+  static List<HighlightModel> getBookNotes(String bookId) {
+    return HighlightStorage.getBookNotes(bookId);
+  }
+
+  /// Remove a note by ID.
+  static void removeNote(String id) {
+    HighlightStorage.removeNote(id);
+  }
+
   // ──── Theme ────
 
   /// Clear cached theme, font, and font size preferences.
