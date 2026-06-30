@@ -152,6 +152,21 @@ No configuration needed — just open the EPUB and the library handles direction
 - Highlights are stored locally via GetStorage and persist across app restarts.
 - The package uses `isar_community` for progress persistence (Android/iOS/Desktop only, no web support).
 
+## Changes in this fork done by me (Alfred Schilken)
+
+- **Table rendering** — EPUB tables rendered as bordered Flutter Tables with header rows and improved height estimation
+- **Tap-to-page navigation** — replaced drag paging with left/right tap zones and slide transitions
+- **Chapter navigation fixes** — text-based anchor fallback for dissolved containers, TOC subchapter navigation, right-edge tap on last page advances to next chapter
+- **Bookmark-based file access** — macOS secure bookmarks with `macos_secure_bookmarks` and directory authorization
+- **BookmarkService** — abstract bookmark service with `BookmarkService` on `ShelfScreen`, full testability
+- **Shelf UI** — persistent book shelf screen replacing hardcoded button, gear icon settings
+- **Settings screen** — directory authorization and gear icon, platform-adaptive UI
+- **Back button** — platform-adaptive back button with `onBack` callback in reader
+- **macOS support** — Drift migration for macOS, platform-adaptive UI patterns
+- **RTL/Hyphenation/Highlight** — text selection toolbar overflow fix, hyphenation fixes, highlight persistence
+- **Robot journey tests** — bookmark persistence tests with stable selectors
+- **Build/config** — bumped version to 0.2.0+2, cleaned build artifacts, updated FVM and macOS project config
+
 ## License
 
 BSD-3
