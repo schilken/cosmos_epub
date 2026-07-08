@@ -119,6 +119,7 @@ String _hyphenateHtml(String html) {
 class PagingTextHandler {
   final Function paginate;
   List<String> pageHtmlFragments = [];
+  void Function(int)? jumpToPage;
 
   PagingTextHandler({required this.paginate});
 }
@@ -193,6 +194,9 @@ class _PagingWidgetState extends State<PagingWidget> {
     super.initState();
     rePaginate();
     _handler = PagingTextHandler(paginate: rePaginate);
+    _handler.jumpToPage = (int pageIndex) {
+      _pageController.currentState?.goToPage(pageIndex);
+    };
     widget.handlerCallback(_handler);
   }
 

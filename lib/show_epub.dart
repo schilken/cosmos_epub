@@ -601,6 +601,7 @@ class ShowEpubState extends State<ShowEpub> {
 
   int _findPageForNote(List<String> pageHtmlFragments, HighlightModel note) {
     log('_findPageForNote: selectedText="${note.selectedText}" paragraphKey=${note.paragraphKey} startIndex=${note.startIndex}');
+    final targetHash = note.paragraphKey.split('_').first;
     for (var i = 0; i < pageHtmlFragments.length; i++) {
       try {
         final doc = html_parser.parse(pageHtmlFragments[i]);
@@ -618,13 +619,14 @@ class ShowEpubState extends State<ShowEpub> {
 
         final pageText = body.text;
         final pageKey = HighlightModel.makeParagraphKey(pageText);
-        if (pageKey == note.paragraphKey) {
-          log('  page $i: FOUND by pageKey ($pageKey), returning $i');
+        final pageHash = pageKey.split('_').first;
+        if (pageHash == targetHash) {
+          log('  page $i: FOUND by pageKey hash ($pageHash), returning $i');
           return i;
         }
 
         final found = pageText.contains(note.selectedText);
-        log('  page $i: pageKey=$pageKey textLen=${pageText.length} selectedFound=$found');
+        log('  page $i: pageKey=$pageKey selectedFound=$found');
         if (found) {
           log('  → returning page $i (selectedText fallback)');
           return i;
@@ -650,7 +652,10 @@ class ShowEpubState extends State<ShowEpub> {
       log('  fragments ready, count: ${fragments.length}');
       final pageIndex = _findPageForNote(fragments, note);
       log('  _findPageForNote returned pageIndex=$pageIndex');
-      jumpToChapter(chapterIndex, pageIndex);
+      _currentPageIndex = pageIndex;
+      bookProgress.setCurrentPageIndex(bookId, pageIndex);
+      controllerPaging.jumpToPage?.call(pageIndex);
+      updateUI();
     });
   }
 
@@ -663,7 +668,10 @@ class ShowEpubState extends State<ShowEpub> {
       log('  same-chapter, fragments count: ${fragments.length}');
       final pageIndex = _findPageForNote(fragments, note);
       log('  _findPageForNote returned pageIndex=$pageIndex');
-      jumpToChapter(chapterIndex, pageIndex);
+      _currentPageIndex = pageIndex;
+      bookProgress.setCurrentPageIndex(bookId, pageIndex);
+      controllerPaging.jumpToPage?.call(pageIndex);
+      updateUI();
     } else {
       log('  cross-chapter, jumping to chapter $chapterIndex page 0 first');
       jumpToChapter(chapterIndex, 0);
