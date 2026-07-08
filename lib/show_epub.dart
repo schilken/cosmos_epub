@@ -598,15 +598,30 @@ class ShowEpubState extends State<ShowEpub> {
     }
   }
 
+  int _findPageForNote(List<String> pageHtmlFragments, HighlightModel note) {
+    for (var i = 0; i < pageHtmlFragments.length; i++) {
+      try {
+        final doc = html_parser.parse(pageHtmlFragments[i]);
+        final body = doc.body ?? doc.documentElement;
+        if (body == null) continue;
+
+        if (body.text.contains(note.selectedText)) {
+          return i;
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+    return 0;
+  }
+
   void _onNoteTapped(HighlightModel note) {
     final chapterIndex = note.chapterIndex;
 
     if (chapterIndex == _currentChapterIndex) {
       final fragments = controllerPaging.pageHtmlFragments;
-      final pageIndex =
-          findPageContainingMatch(fragments, note.startIndex, note.endIndex);
-      final effectivePage = pageIndex == -1 ? 0 : pageIndex;
-      jumpToChapter(chapterIndex, effectivePage);
+      final pageIndex = _findPageForNote(fragments, note);
+      jumpToChapter(chapterIndex, pageIndex);
     } else {
       jumpToChapter(chapterIndex, 0);
 
@@ -615,10 +630,8 @@ class ShowEpubState extends State<ShowEpub> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final fragments = controllerPaging.pageHtmlFragments;
-          final pageIndex = findPageContainingMatch(
-              fragments, note.startIndex, note.endIndex);
-          final effectivePage = pageIndex == -1 ? 0 : pageIndex;
-          jumpToChapter(chapterIndex, effectivePage);
+          final pageIndex = _findPageForNote(fragments, note);
+          jumpToChapter(chapterIndex, pageIndex);
         });
       });
     }
