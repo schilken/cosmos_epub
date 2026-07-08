@@ -611,11 +611,13 @@ class ShowEpubState extends State<ShowEpub> {
         }
 
         final elements = body.querySelectorAll('*');
+        log('  page $i: checking ${elements.length} elements for paragraphKey match');
         for (final el in elements) {
           final elText = el.text.trim();
           if (elText.length < 3) continue;
-          if (HighlightModel.makeParagraphKey(elText) == note.paragraphKey) {
-            log('  page $i: found by paragraphKey, returning $i');
+          final elKey = HighlightModel.makeParagraphKey(elText);
+          if (elKey == note.paragraphKey) {
+            log('  page $i: FOUND by paragraphKey ($elKey), returning $i');
             return i;
           }
         }
