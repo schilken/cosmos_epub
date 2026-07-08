@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io' show File, Platform;
 
 import 'package:cosmos_epub/Component/notes_list_screen.dart';
@@ -600,16 +599,12 @@ class ShowEpubState extends State<ShowEpub> {
   }
 
   int _findPageForNote(List<String> pageHtmlFragments, HighlightModel note) {
-    log('_findPageForNote: selectedText="${note.selectedText}" paragraphKey=${note.paragraphKey} startIndex=${note.startIndex}');
     final targetHash = note.paragraphKey.split('_').first;
     for (var i = 0; i < pageHtmlFragments.length; i++) {
       try {
         final doc = html_parser.parse(pageHtmlFragments[i]);
         final body = doc.body ?? doc.documentElement;
-        if (body == null) {
-          log('  page $i: body is null');
-          continue;
-        }
+        if (body == null) continue;
 
         final toRemove =
             body.querySelectorAll('script, style, head, meta, link, title');
@@ -621,66 +616,31 @@ class ShowEpubState extends State<ShowEpub> {
         final pageKey = HighlightModel.makeParagraphKey(pageText);
         final pageHash = pageKey.split('_').first;
         if (pageHash == targetHash) {
-          log('  page $i: FOUND by pageKey hash ($pageHash), returning $i');
           return i;
         }
 
-        final found = pageText.contains(note.selectedText);
-        log('  page $i: pageKey=$pageKey selectedFound=$found');
-        if (found) {
-          log('  → returning page $i (selectedText fallback)');
+        if (pageText.contains(note.selectedText)) {
           return i;
         }
-      } catch (e) {
-        log('  page $i: parse error: $e');
+      } catch (_) {
         continue;
       }
     }
-    log('  → NOT FOUND, fallback to 0');
     return 0;
-  }
-
-  void _navigateToNotePage(HighlightModel note, int chapterIndex) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final fragments = controllerPaging.pageHtmlFragments;
-      if (fragments.isEmpty) {
-        log('  fragments still empty, polling again...');
-        _navigateToNotePage(note, chapterIndex);
-        return;
-      }
-      log('  fragments ready, count: ${fragments.length}');
-      final pageIndex = _findPageForNote(fragments, note);
-      log('  _findPageForNote returned pageIndex=$pageIndex');
-      _currentPageIndex = pageIndex;
-      bookProgress.setCurrentPageIndex(bookId, pageIndex);
-      controllerPaging.jumpToPage?.call(pageIndex);
-      updateUI();
-    });
   }
 
   void _onNoteTapped(HighlightModel note) {
     final chapterIndex = note.chapterIndex;
-    log('_onNoteTapped: noteChapter=$chapterIndex currentChapter=$_currentChapterIndex sameChapter=${chapterIndex == _currentChapterIndex}');
 
     if (chapterIndex == _currentChapterIndex) {
       final fragments = controllerPaging.pageHtmlFragments;
-      log('  same-chapter, fragments count: ${fragments.length}');
       final pageIndex = _findPageForNote(fragments, note);
-      log('  _findPageForNote returned pageIndex=$pageIndex');
-      log('  jumpToPage is ${controllerPaging.jumpToPage != null ? "SET" : "NULL"}');
       _currentPageIndex = pageIndex;
       bookProgress.setCurrentPageIndex(bookId, pageIndex);
-      if (controllerPaging.jumpToPage != null) {
-        log('  calling jumpToPage($pageIndex)');
-        controllerPaging.jumpToPage!(pageIndex);
-        log('  jumpToPage returned');
-      }
+      controllerPaging.jumpToPage?.call(pageIndex);
       updateUI();
     } else {
-      log('  cross-chapter, jumping to chapter $chapterIndex page 0 first');
       jumpToChapter(chapterIndex, 0);
-      _navigateToNotePage(note, chapterIndex);
     }
   }
 
@@ -694,7 +654,6 @@ class ShowEpubState extends State<ShowEpub> {
     _currentPageIndex = effectivePageIdx;
 
     if (effectiveChapterIdx == _currentChapterIndex) {
-      log('jumpToChapter: same-chapter pendingJumpPageIndex=$effectivePageIdx (was $_pendingJumpPageIndex)');
       _pendingJumpPageIndex = effectivePageIdx;
       updateUI();
     } else {

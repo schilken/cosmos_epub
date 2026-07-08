@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io' show Platform;
 
 import 'package:cosmos_epub/Component/highlight_toolbar.dart';
@@ -203,18 +202,12 @@ class _PagingWidgetState extends State<PagingWidget> {
   @override
   void didUpdateWidget(PagingWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    log('PagingWidget.didUpdateWidget: pendingJump old=${oldWidget.pendingJumpPageIndex} new=${widget.pendingJumpPageIndex} _pageHtmls.len=${_pageHtmls.length} _currentPage=$_currentPageIndex');
     if (widget.pendingJumpPageIndex != null &&
         widget.pendingJumpPageIndex != oldWidget.pendingJumpPageIndex) {
-      log('  → scheduling goToPage(${widget.pendingJumpPageIndex})');
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          log('  goToPage callback: NOT mounted');
-          return;
-        }
+        if (!mounted) return;
         final target =
             widget.pendingJumpPageIndex!.clamp(0, _pageHtmls.length - 1);
-        log('  goToPage callback: calling goToPage($target) _pageHtmls.len=${_pageHtmls.length}');
         _pageController.currentState?.goToPage(target);
       });
     }

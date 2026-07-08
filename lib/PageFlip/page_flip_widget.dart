@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 
 //ignore: must_be_immutable
@@ -110,16 +108,11 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   }
 
   void goToPage(int pageIndex) {
-    if (_effectiveChildren.isEmpty) {
-      log('PageFlipWidget.goToPage($pageIndex): _effectiveChildren is EMPTY, returning');
-      return;
-    }
+    if (_effectiveChildren.isEmpty) return;
     final clamped = pageIndex.clamp(0, _effectiveChildren.length - 1);
-    log('PageFlipWidget.goToPage($pageIndex): clamped=$clamped _currentPage=$_currentPage animating=${_controller.isAnimating}');
     if (_controller.isAnimating) _controller.stop();
     _controller.reset();
     _currentPage = clamped;
-    log('PageFlipWidget.goToPage: after set _currentPage=$_currentPage, calling onPageFlip');
     widget.onPageFlip(_currentPage, isForward: true);
     setState(() {});
   }
