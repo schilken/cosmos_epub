@@ -609,11 +609,22 @@ class ShowEpubState extends State<ShowEpub> {
           log('  page $i: body is null');
           continue;
         }
+
+        final elements = body.querySelectorAll('*');
+        for (final el in elements) {
+          final elText = el.text.trim();
+          if (elText.length < 3) continue;
+          if (HighlightModel.makeParagraphKey(elText) == note.paragraphKey) {
+            log('  page $i: found by paragraphKey, returning $i');
+            return i;
+          }
+        }
+
         final pageText = body.text;
         final found = pageText.contains(note.selectedText);
         log('  page $i: textLen=${pageText.length} matched=$found');
         if (found) {
-          log('  → returning page $i');
+          log('  → returning page $i (selectedText fallback)');
           return i;
         }
       } catch (e) {
@@ -623,6 +634,22 @@ class ShowEpubState extends State<ShowEpub> {
     }
     log('  → NOT FOUND in any page, fallback to 0');
     return 0;
+  }
+
+  void _navigateToNotePage(HighlightModel note, int chapterIndex) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final fragments = controllerPaging.pageHtmlFragments;
+      if (fragments.isEmpty) {
+        log('  fragments still empty, polling again...');
+        _navigateToNotePage(note, chapterIndex);
+        return;
+      }
+      log('  fragments ready, count: ${fragments.length}');
+      final pageIndex = _findPageForNote(fragments, note);
+      log('  _findPageForNote returned pageIndex=$pageIndex');
+      jumpToChapter(chapterIndex, pageIndex);
+    });
   }
 
   void _onNoteTapped(HighlightModel note) {
@@ -638,18 +665,7 @@ class ShowEpubState extends State<ShowEpub> {
     } else {
       log('  cross-chapter, jumping to chapter $chapterIndex page 0 first');
       jumpToChapter(chapterIndex, 0);
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final fragments = controllerPaging.pageHtmlFragments;
-          log('  post-frame: fragments count: ${fragments.length}');
-          final pageIndex = _findPageForNote(fragments, note);
-          log('  post-frame _findPageForNote returned pageIndex=$pageIndex');
-          jumpToChapter(chapterIndex, pageIndex);
-        });
-      });
+      _navigateToNotePage(note, chapterIndex);
     }
   }
 
