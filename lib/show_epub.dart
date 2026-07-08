@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io' show File, Platform;
 
 import 'package:cosmos_epub/Component/notes_list_screen.dart';
@@ -599,30 +600,43 @@ class ShowEpubState extends State<ShowEpub> {
   }
 
   int _findPageForNote(List<String> pageHtmlFragments, HighlightModel note) {
+    log('_findPageForNote: selectedText="${note.selectedText}" paragraphKey=${note.paragraphKey} startIndex=${note.startIndex}');
     for (var i = 0; i < pageHtmlFragments.length; i++) {
       try {
         final doc = html_parser.parse(pageHtmlFragments[i]);
         final body = doc.body ?? doc.documentElement;
-        if (body == null) continue;
-
-        if (body.text.contains(note.selectedText)) {
+        if (body == null) {
+          log('  page $i: body is null');
+          continue;
+        }
+        final pageText = body.text;
+        final found = pageText.contains(note.selectedText);
+        log('  page $i: textLen=${pageText.length} matched=$found');
+        if (found) {
+          log('  → returning page $i');
           return i;
         }
-      } catch (_) {
+      } catch (e) {
+        log('  page $i: parse error: $e');
         continue;
       }
     }
+    log('  → NOT FOUND in any page, fallback to 0');
     return 0;
   }
 
   void _onNoteTapped(HighlightModel note) {
     final chapterIndex = note.chapterIndex;
+    log('_onNoteTapped: noteChapter=$chapterIndex currentChapter=$_currentChapterIndex sameChapter=${chapterIndex == _currentChapterIndex}');
 
     if (chapterIndex == _currentChapterIndex) {
       final fragments = controllerPaging.pageHtmlFragments;
+      log('  same-chapter, fragments count: ${fragments.length}');
       final pageIndex = _findPageForNote(fragments, note);
+      log('  _findPageForNote returned pageIndex=$pageIndex');
       jumpToChapter(chapterIndex, pageIndex);
     } else {
+      log('  cross-chapter, jumping to chapter $chapterIndex page 0 first');
       jumpToChapter(chapterIndex, 0);
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -630,7 +644,9 @@ class ShowEpubState extends State<ShowEpub> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final fragments = controllerPaging.pageHtmlFragments;
+          log('  post-frame: fragments count: ${fragments.length}');
           final pageIndex = _findPageForNote(fragments, note);
+          log('  post-frame _findPageForNote returned pageIndex=$pageIndex');
           jumpToChapter(chapterIndex, pageIndex);
         });
       });
@@ -647,9 +663,11 @@ class ShowEpubState extends State<ShowEpub> {
     _currentPageIndex = effectivePageIdx;
 
     if (effectiveChapterIdx == _currentChapterIndex) {
+      log('jumpToChapter: same-chapter pendingJumpPageIndex=$effectivePageIdx (was $_pendingJumpPageIndex)');
       _pendingJumpPageIndex = effectivePageIdx;
       updateUI();
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        log('jumpToChapter post-frame: nullifying pendingJumpPageIndex (was $_pendingJumpPageIndex)');
         _pendingJumpPageIndex = null;
         updateUI();
       });
