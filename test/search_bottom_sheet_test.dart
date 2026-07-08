@@ -95,6 +95,35 @@ Widget _buildSheetWidget({
   );
 }
 
+Widget _buildSheetWidgetWithOnClose({
+  required EpubSearchController controller,
+  void Function(SearchResult)? onResultTapped,
+  VoidCallback? onClose,
+}) {
+  return ScreenUtilInit(
+    designSize: const Size(375, 812),
+    builder: (_, __) => MaterialApp(
+      theme: ThemeData(useMaterial3: false),
+      home: Scaffold(
+        body: SafeArea(
+          child: SizedBox(
+            height: 600,
+            child: SearchBottomSheet(
+              chapters: _testChapters(),
+              searchController: controller,
+              accentColor: Colors.blue,
+              backgroundColor: Colors.white,
+              fontColor: Colors.black,
+              onResultTapped: onResultTapped ?? (_) {},
+              onClose: onClose,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   late AppDatabase db;
 
@@ -244,6 +273,67 @@ void main() {
 
       expect(tappedResult, isNotNull);
       expect(tappedResult!.matchedText.toLowerCase(), contains('fox'));
+    });
+
+    testWidgets('close button is present when onClose is provided',
+        (tester) async {
+      final controller = EpubSearchController();
+      await tester.pumpWidget(_buildSheetWidgetWithOnClose(
+        controller: controller,
+        onClose: () {},
+      ));
+      await tester.pump();
+
+      expect(find.byKey(const Key('search_close_button')), findsOneWidget);
+    });
+
+    testWidgets('close button is absent when onClose is not provided',
+        (tester) async {
+      final controller = EpubSearchController();
+      await tester.pumpWidget(_buildSheetWidget(controller: controller));
+      await tester.pump();
+
+      expect(find.byKey(const Key('search_close_button')), findsNothing);
+    });
+
+    testWidgets('tapping close calls onClose callback and pops sheet',
+        (tester) async {
+      final controller = EpubSearchController();
+      var onCloseCalled = false;
+
+      await tester.pumpWidget(_buildSheetWidgetWithOnClose(
+        controller: controller,
+        onClose: () => onCloseCalled = true,
+      ));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('search_close_button')));
+      await tester.pumpAndSettle();
+
+      expect(onCloseCalled, isTrue);
+    });
+
+    testWidgets('tapping close clears controller state', (tester) async {
+      final controller = EpubSearchController();
+      controller.setChapters(_testChapters());
+
+      await tester.pumpWidget(_buildSheetWidgetWithOnClose(
+        controller: controller,
+        onClose: () {
+          controller.clear();
+        },
+      ));
+      await tester.pump();
+
+      controller.search('fox');
+      await _completeSearch(controller, tester);
+      controller.isActive = true;
+
+      await tester.tap(find.byKey(const Key('search_close_button')));
+      await tester.pumpAndSettle();
+
+      expect(controller.isActive, isFalse);
+      expect(controller.results, isEmpty);
     });
   });
 

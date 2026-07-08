@@ -16,6 +16,7 @@ class SearchBottomSheet extends StatefulWidget {
   final Color backgroundColor;
   final Color fontColor;
   final void Function(SearchResult) onResultTapped;
+  final VoidCallback? onClose;
 
   const SearchBottomSheet({
     super.key,
@@ -25,6 +26,7 @@ class SearchBottomSheet extends StatefulWidget {
     required this.backgroundColor,
     required this.fontColor,
     required this.onResultTapped,
+    this.onClose,
   });
 
   @override
@@ -83,14 +85,38 @@ class _SearchBottomSheetState extends State<SearchBottomSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40.w,
-                height: 4.h,
-                margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
+              Row(
+                children: [
+                  const Spacer(),
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (widget.onClose != null)
+                    IconButton(
+                      key: const Key('search_close_button'),
+                      icon: Icon(
+                        Icons.close,
+                        color: widget.fontColor.withValues(alpha: 0.6),
+                        size: 20.sp,
+                      ),
+                      onPressed: () {
+                        widget.onClose?.call();
+                        Navigator.pop(context);
+                      },
+                      padding: EdgeInsets.only(right: 8.w),
+                      constraints: BoxConstraints(
+                        minWidth: 32.w,
+                        minHeight: 32.h,
+                      ),
+                    ),
+                ],
               ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),

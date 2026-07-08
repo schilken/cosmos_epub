@@ -521,6 +521,11 @@ class ShowEpubState extends State<ShowEpub> {
     }
   }
 
+  void _onSearchSheetClosed() {
+    _clearSearchState();
+    setState(() {});
+  }
+
   void _clearSearchState() {
     _searchController.clear();
     _searchController.clearStorage(bookId);
@@ -552,6 +557,7 @@ class ShowEpubState extends State<ShowEpub> {
             backgroundColor: backColor,
             fontColor: fontColor,
             onResultTapped: _onSearchResultTapped,
+            onClose: _onSearchSheetClosed,
           ),
         );
       },
