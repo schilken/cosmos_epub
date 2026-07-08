@@ -107,6 +107,16 @@ class PageFlipWidgetState extends State<PageFlipWidget>
     _controller.forward(from: 0);
   }
 
+  void goToPage(int pageIndex) {
+    if (_effectiveChildren.isEmpty) return;
+    final clamped = pageIndex.clamp(0, _effectiveChildren.length - 1);
+    if (_controller.isAnimating) _controller.stop();
+    _controller.reset();
+    _currentPage = clamped;
+    widget.onPageFlip(_currentPage, isForward: true);
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

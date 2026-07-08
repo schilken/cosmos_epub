@@ -6,7 +6,11 @@ import 'package:cosmos_epub/Helpers/context_extensions.dart';
 import 'package:cosmos_epub/Helpers/epub_content_parser.dart';
 import 'package:cosmos_epub/Helpers/functions.dart';
 import 'package:cosmos_epub/Helpers/note_exporter.dart';
+import 'package:cosmos_epub/Helpers/search_bottom_sheet.dart';
+import 'package:cosmos_epub/Helpers/search_service.dart';
 import 'package:cosmos_epub/Model/highlight_model.dart';
+import 'package:cosmos_epub/Model/search_controller.dart';
+import 'package:cosmos_epub/Model/search_result.dart';
 import 'package:epubx/epubx.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -105,11 +109,15 @@ class ShowEpubState extends State<ShowEpub> {
   bool showNext = false;
   int _currentChapterIndex = 0;
   int _currentPageIndex = 0;
+  int? _pendingJumpPageIndex;
   var dropDownFontItems;
 
   GetStorage gs = GetStorage();
 
   PagingTextHandler controllerPaging = PagingTextHandler(paginate: () {});
+
+  final EpubSearchController _searchController = EpubSearchController();
+  bool _isSearchSheetOpen = false;
 
   @override
   void initState() {
@@ -123,7 +131,17 @@ class ShowEpubState extends State<ShowEpub> {
     getTitleFromXhtml();
     reLoadChapter(init: true);
 
+    _restoreSearchState();
+
     super.initState();
+  }
+
+  void _restoreSearchState() {
+    final gs = GetStorage();
+    final key = '$libSearchPrefix$bookId';
+    if (gs.read<String>(key) != null) {
+      _searchController.loadFromStorage(bookId);
+    }
   }
 
   loadThemeSettings() {
@@ -480,6 +498,8 @@ class ShowEpubState extends State<ShowEpub> {
   nextChapter() async {
     await bookProgress.setCurrentPageIndex(bookId, 0);
 
+    _clearSearchState();
+
     final progress = await bookProgress.getBookProgress(bookId);
     var index = progress.currentChapterIndex ?? 0;
 
@@ -491,11 +511,107 @@ class ShowEpubState extends State<ShowEpub> {
   prevChapter() async {
     await bookProgress.setCurrentPageIndex(bookId, 0);
 
+    _clearSearchState();
+
     final progress = await bookProgress.getBookProgress(bookId);
     var index = progress.currentChapterIndex ?? 0;
 
     if (index != 0) {
       reLoadChapter(index: index - 1);
+    }
+  }
+
+  void _clearSearchState() {
+    _searchController.clear();
+    _searchController.clearStorage(bookId);
+  }
+
+  void _openSearchSheet() {
+    _searchController.setChapters(chaptersList);
+    _searchController.loadFromStorage(bookId);
+    _isSearchSheetOpen = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: true,
+      backgroundColor: backColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.r),
+          topRight: Radius.circular(16.r),
+        ),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.85,
+          child: SearchBottomSheet(
+            chapters: chaptersList,
+            searchController: _searchController,
+            accentColor: widget.accentColor,
+            backgroundColor: backColor,
+            fontColor: fontColor,
+            onResultTapped: _onSearchResultTapped,
+          ),
+        );
+      },
+    ).then((_) {
+      _isSearchSheetOpen = false;
+      if (_searchController.isActive && _searchController.results.isNotEmpty) {
+        updateUI();
+      }
+    });
+  }
+
+  void _onSearchResultTapped(SearchResult result) {
+    _searchController.isActive = true;
+    _searchController.saveToStorage(bookId);
+
+    final chapterIndex = result.chapterIndex;
+
+    if (chapterIndex == _currentChapterIndex) {
+      final fragments = controllerPaging.pageHtmlFragments;
+      final pageIndex = findPageContainingMatch(fragments, result.matchedText);
+      final effectivePage = pageIndex == -1 ? 0 : pageIndex;
+      jumpToChapter(chapterIndex, effectivePage);
+    } else {
+      jumpToChapter(chapterIndex, 0);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final fragments = controllerPaging.pageHtmlFragments;
+          final pageIndex =
+              findPageContainingMatch(fragments, result.matchedText);
+          final effectivePage = pageIndex == -1 ? 0 : pageIndex;
+          jumpToChapter(chapterIndex, effectivePage);
+        });
+      });
+    }
+  }
+
+  void jumpToChapter(int chapterIndex, int pageIndex) {
+    final maxChapter = chaptersList.isEmpty ? 0 : chaptersList.length - 1;
+    final effectiveChapterIdx = chapterIndex.clamp(0, maxChapter);
+    final effectivePageIdx = pageIndex < 0 ? 0 : pageIndex;
+
+    bookProgress.setCurrentChapterIndex(bookId, effectiveChapterIdx);
+    bookProgress.setCurrentPageIndex(bookId, effectivePageIdx);
+    _currentPageIndex = effectivePageIdx;
+
+    if (effectiveChapterIdx == _currentChapterIndex) {
+      _pendingJumpPageIndex = effectivePageIdx;
+      updateUI();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pendingJumpPageIndex = null;
+        updateUI();
+      });
+    } else {
+      reLoadChapter(index: effectiveChapterIdx);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pendingJumpPageIndex = null;
+      });
     }
   }
 
@@ -568,6 +684,8 @@ class ShowEpubState extends State<ShowEpub> {
                                           backgroundColor: backColor,
                                           lastWidget: null,
                                           starterPageIndex: _currentPageIndex,
+                                          pendingJumpPageIndex:
+                                              _pendingJumpPageIndex,
                                           anchorFragment:
                                               chaptersList[currentChapterIndex]
                                                   .anchorFragment,
@@ -809,23 +927,42 @@ class ShowEpubState extends State<ShowEpub> {
                                 bottom: BorderSide(
                                     color: widget.accentColor, width: 3.h)),
                             elevation: 0,
-                            leading: IconButton(
-                              key: const Key('back_button'),
-                              onPressed: () {
-                                if (widget.onBack != null) {
-                                  widget.onBack!();
-                                } else {
-                                  Navigator.pop(context);
-                                }
-                              },
-                              icon: Icon(
-                                Platform.isIOS || Platform.isMacOS
-                                    ? Icons.arrow_back_ios
-                                    : Icons.arrow_back,
-                                color: fontColor,
-                                size: 20.h,
-                              ),
-                            ),
+                            leading: _searchController.isActive &&
+                                    _searchController.results.isNotEmpty
+                                ? IconButton(
+                                    key: const Key('back_to_search_button'),
+                                    tooltip: 'Back to search results',
+                                    onPressed: () {
+                                      if (_isSearchSheetOpen) {
+                                        _clearSearchState();
+                                        Navigator.pop(context);
+                                      } else {
+                                        _openSearchSheet();
+                                      }
+                                    },
+                                    icon: Icon(
+                                      Platform.isIOS || Platform.isMacOS
+                                          ? Icons.manage_search
+                                          : Icons.arrow_back,
+                                      color: fontColor,
+                                      size: 20.h,
+                                    ),
+                                  )
+                                : IconButton(
+                                    key: const Key('back_button'),
+                                    onPressed: () {
+                                      if (widget.onBack != null) {
+                                        widget.onBack!();
+                                      } else {
+                                        Navigator.pop(context);
+                                      }
+                                    },
+                                    icon: Icon(
+                                      Icons.shelves,
+                                      color: fontColor,
+                                      size: 20.h,
+                                    ),
+                                  ),
                             actions: [
                               IconButton(
                                 key: const Key('toc_button'),
@@ -874,6 +1011,17 @@ class ShowEpubState extends State<ShowEpub> {
                               SizedBox(
                                 width: 10.w,
                               ),
+                              if (!_searchController.isActive &&
+                                  !_isSearchSheetOpen)
+                                IconButton(
+                                  key: const Key('search_button'),
+                                  onPressed: _openSearchSheet,
+                                  icon: Icon(
+                                    Icons.search,
+                                    color: fontColor,
+                                    size: 20.h,
+                                  ),
+                                ),
                               PopupMenuButton<String>(
                                 key: const Key('reader_overflow_menu'),
                                 icon: Icon(
@@ -1003,6 +1151,8 @@ class ShowEpubState extends State<ShowEpub> {
                 ))) ??
         false;
     if (shouldUpdate) {
+      _clearSearchState();
+
       final progress = await bookProgress.getBookProgress(bookId);
       var index = progress.currentChapterIndex ?? 0;
 

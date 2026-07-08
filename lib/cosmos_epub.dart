@@ -21,6 +21,8 @@ import 'package:http/http.dart' as http;
 /// to open an EPUB file in the reader.
 class CosmosEpub {
   static bool _initialized = false;
+  static final GlobalKey<ShowEpubState> _showEpubKey =
+      GlobalKey<ShowEpubState>();
 
   // ──── Initialization ────
 
@@ -164,6 +166,12 @@ class CosmosEpub {
     return await bookProgress.setCurrentChapterIndex(bookId, index);
   }
 
+  /// Jump to a specific chapter and page in the currently open book.
+  static void jumpToChapter(String bookId, int chapterIndex, int pageIndex) {
+    _checkInitialization();
+    _showEpubKey.currentState?.jumpToChapter(chapterIndex, pageIndex);
+  }
+
   /// Delete reading progress for a specific book.
   static Future<bool> deleteBookProgress(String bookId) async {
     return await bookProgress.deleteBookProgress(bookId);
@@ -250,6 +258,7 @@ class CosmosEpub {
     var route = MaterialPageRoute(
       builder: (context) {
         return ShowEpub(
+          key: _showEpubKey,
           epubBook: epubBook,
           starterChapter: starterChapter >= 0
               ? starterChapter

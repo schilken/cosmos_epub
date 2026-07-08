@@ -117,6 +117,7 @@ String _hyphenateHtml(String html) {
 
 class PagingTextHandler {
   final Function paginate;
+  List<String> pageHtmlFragments = [];
 
   PagingTextHandler({required this.paginate});
 }
@@ -140,6 +141,7 @@ class PagingWidget extends StatefulWidget {
   final Function(int, int)? onFirstPageBack;
   final Widget? lastWidget;
   final String? anchorFragment;
+  final int? pendingJumpPageIndex;
 
   const PagingWidget({
     super.key,
@@ -164,6 +166,7 @@ class PagingWidget extends StatefulWidget {
     required this.totalChapters,
     this.lastWidget,
     this.anchorFragment,
+    this.pendingJumpPageIndex,
   });
 
   @override
@@ -177,16 +180,31 @@ class _PagingWidgetState extends State<PagingWidget> {
   int _anchorPageIndex = -1;
   Future<void> paginateFuture = Future.value(true);
   late RenderBox _initializedRenderBox;
+  late PagingTextHandler _handler;
 
   final _pageKey = GlobalKey();
   final _pageController = GlobalKey<PageFlipWidgetState>();
 
   @override
   void initState() {
-    rePaginate();
-    var handler = PagingTextHandler(paginate: rePaginate);
-    widget.handlerCallback(handler);
     super.initState();
+    rePaginate();
+    _handler = PagingTextHandler(paginate: rePaginate);
+    widget.handlerCallback(_handler);
+  }
+
+  @override
+  void didUpdateWidget(PagingWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pendingJumpPageIndex != null &&
+        widget.pendingJumpPageIndex != oldWidget.pendingJumpPageIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final target =
+            widget.pendingJumpPageIndex!.clamp(0, _pageHtmls.length - 1);
+        _pageController.currentState?.goToPage(target);
+      });
+    }
   }
 
   rePaginate() {
@@ -220,6 +238,7 @@ class _PagingWidgetState extends State<PagingWidget> {
     );
 
     _pageHtmls = paginator.paginate(resolvedHtml);
+    _handler.pageHtmlFragments = List.unmodifiable(_pageHtmls);
 
     // Anchor detection must run BEFORE hyphenation so text matching works
     // (soft hyphens break substring containment checks).
