@@ -684,11 +684,6 @@ class ShowEpubState extends State<ShowEpub> {
       log('jumpToChapter: same-chapter pendingJumpPageIndex=$effectivePageIdx (was $_pendingJumpPageIndex)');
       _pendingJumpPageIndex = effectivePageIdx;
       updateUI();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        log('jumpToChapter post-frame: nullifying pendingJumpPageIndex (was $_pendingJumpPageIndex)');
-        _pendingJumpPageIndex = null;
-        updateUI();
-      });
     } else {
       reLoadChapter(index: effectiveChapterIdx);
       WidgetsBinding.instance.addPostFrameCallback((_) {
