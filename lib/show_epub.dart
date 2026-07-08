@@ -668,9 +668,14 @@ class ShowEpubState extends State<ShowEpub> {
       log('  same-chapter, fragments count: ${fragments.length}');
       final pageIndex = _findPageForNote(fragments, note);
       log('  _findPageForNote returned pageIndex=$pageIndex');
+      log('  jumpToPage is ${controllerPaging.jumpToPage != null ? "SET" : "NULL"}');
       _currentPageIndex = pageIndex;
       bookProgress.setCurrentPageIndex(bookId, pageIndex);
-      controllerPaging.jumpToPage?.call(pageIndex);
+      if (controllerPaging.jumpToPage != null) {
+        log('  calling jumpToPage($pageIndex)');
+        controllerPaging.jumpToPage!(pageIndex);
+        log('  jumpToPage returned');
+      }
       updateUI();
     } else {
       log('  cross-chapter, jumping to chapter $chapterIndex page 0 first');
