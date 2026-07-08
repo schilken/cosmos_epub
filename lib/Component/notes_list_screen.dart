@@ -6,11 +6,13 @@ import '../cosmos_epub.dart';
 class NotesListScreen extends StatefulWidget {
   final String bookId;
   final List<HighlightModel> Function(String)? noteProvider;
+  final void Function(HighlightModel)? onNoteTapped;
 
   const NotesListScreen({
     super.key,
     required this.bookId,
     this.noteProvider,
+    this.onNoteTapped,
   });
 
   @override
@@ -47,11 +49,16 @@ class _NotesListScreenState extends State<NotesListScreen> {
               itemBuilder: (context, index) {
                 final note = _notes[index];
                 final subtitle = 'Ch. ${note.chapterIndex + 1}'
+                    ' (idx: ${note.startIndex})'
                     ' · ${note.selectedText.length > 60 ? '${note.selectedText.substring(0, 60)}…' : note.selectedText}';
                 return ListTile(
                   key: Key('note_${note.id}'),
                   title: Text(note.noteText ?? ''),
                   subtitle: Text(subtitle),
+                  onTap: () {
+                    widget.onNoteTapped?.call(note);
+                    Navigator.pop(context);
+                  },
                   trailing: IconButton(
                     key: Key('note_delete_${note.id}'),
                     icon: const Icon(Icons.delete_outline),

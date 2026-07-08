@@ -24,11 +24,13 @@ HighlightModel _note({
 Widget _buildHarness({
   required List<HighlightModel> Function(String) noteProvider,
   String bookId = 'book1',
+  void Function(HighlightModel)? onNoteTapped,
 }) =>
     MaterialApp(
       home: NotesListScreen(
         bookId: bookId,
         noteProvider: noteProvider,
+        onNoteTapped: onNoteTapped,
       ),
     );
 
@@ -69,6 +71,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('note_n1')), findsNothing);
+  });
+
+  testWidgets('tapping a note calls onNoteTapped with correct HighlightModel',
+      (tester) async {
+    final notes = [_note(id: 'n1', noteText: 'tap note')];
+    HighlightModel? receivedNote;
+
+    await tester.pumpWidget(_buildHarness(
+      noteProvider: (_) => notes,
+      onNoteTapped: (note) => receivedNote = note,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('note_n1')));
+    await tester.pumpAndSettle();
+
+    expect(receivedNote, isNotNull);
+    expect(receivedNote!.id, 'n1');
+    expect(receivedNote!.noteText, 'tap note');
   });
 
   testWidgets('empty notes shows empty-state message', (tester) async {

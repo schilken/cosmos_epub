@@ -572,15 +572,36 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     final chapterIndex = widget.chapterIndex;
     final bookId = widget.bookId;
 
+    final range =
+        _resolveSelectionRange(selectedText, cleanText: builderCleanText);
+
+    HighlightModel? existingNote;
+    String existingNoteText = '';
+    if (range != null) {
+      final pKey = HighlightModel.makeParagraphKey(builderCleanText);
+      final paraHighlights =
+          HighlightStorage.getParagraphHighlights(bookId, chapterIndex, pKey);
+      for (final h in paraHighlights) {
+        if (h.startIndex == range.start &&
+            h.endIndex == range.end &&
+            h.isNote) {
+          existingNote = h;
+          existingNoteText = h.noteText ?? '';
+          break;
+        }
+      }
+    }
+
     showDialog<String?>(
       context: context,
       builder: (ctx) {
-        var noteText = '';
-        var saveEnabled = false;
+        var noteText = existingNoteText;
+        var saveEnabled = existingNoteText.isNotEmpty;
+        final controller = TextEditingController(text: existingNoteText);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              title: const Text('Add Note'),
+              title: Text(existingNote != null ? 'Edit Note' : 'Add Note'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,6 +615,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
+                    controller: controller,
                     autofocus: true,
                     maxLines: 5,
                     minLines: 2,
@@ -628,8 +650,6 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     ).then((result) {
       if (result == null || result.trim().isEmpty) return;
 
-      final range =
-          _resolveSelectionRange(selectedText, cleanText: builderCleanText);
       if (range == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -642,7 +662,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       final pKey = HighlightModel.makeParagraphKey(builderCleanText);
 
       final highlight = HighlightModel(
-        id: HighlightModel.generateId(),
+        id: existingNote?.id ?? HighlightModel.generateId(),
         bookId: bookId,
         chapterIndex: chapterIndex,
         paragraphKey: pKey,

@@ -598,6 +598,32 @@ class ShowEpubState extends State<ShowEpub> {
     }
   }
 
+  void _onNoteTapped(HighlightModel note) {
+    final chapterIndex = note.chapterIndex;
+
+    if (chapterIndex == _currentChapterIndex) {
+      final fragments = controllerPaging.pageHtmlFragments;
+      final pageIndex =
+          findPageContainingMatch(fragments, note.startIndex, note.endIndex);
+      final effectivePage = pageIndex == -1 ? 0 : pageIndex;
+      jumpToChapter(chapterIndex, effectivePage);
+    } else {
+      jumpToChapter(chapterIndex, 0);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final fragments = controllerPaging.pageHtmlFragments;
+          final pageIndex = findPageContainingMatch(
+              fragments, note.startIndex, note.endIndex);
+          final effectivePage = pageIndex == -1 ? 0 : pageIndex;
+          jumpToChapter(chapterIndex, effectivePage);
+        });
+      });
+    }
+  }
+
   void jumpToChapter(int chapterIndex, int pageIndex) {
     final maxChapter = chaptersList.isEmpty ? 0 : chaptersList.length - 1;
     final effectiveChapterIdx = chapterIndex.clamp(0, maxChapter);
@@ -1048,6 +1074,9 @@ class ShowEpubState extends State<ShowEpub> {
                                         MaterialPageRoute(
                                           builder: (_) => NotesListScreen(
                                             bookId: bookId,
+                                            onNoteTapped: (note) {
+                                              _onNoteTapped(note);
+                                            },
                                           ),
                                         ),
                                       );
@@ -1095,10 +1124,7 @@ class ShowEpubState extends State<ShowEpub> {
 
   Future<void> _handleExport(
       String extension, String Function() buildContent) async {
-    final content = buildContent();
-
-    if (content.isEmpty || (!content.contains('---'))) {
-      // No notes (only header)
+    if (HighlightStorage.getBookNotes(bookId).isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No notes to export')),
@@ -1106,6 +1132,8 @@ class ShowEpubState extends State<ShowEpub> {
       }
       return;
     }
+
+    final content = buildContent();
 
     try {
       final safeTitle = bookTitle
@@ -1120,7 +1148,6 @@ class ShowEpubState extends State<ShowEpub> {
       final path = await FilePicker.platform.saveFile(
         dialogTitle: 'Export Notes',
         fileName: fileName,
-        bytes: utf8.encode(content),
       );
 
       if (path == null) {
