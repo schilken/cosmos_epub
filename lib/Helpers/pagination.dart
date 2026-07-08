@@ -268,21 +268,26 @@ class _PagingWidgetState extends State<PagingWidget> {
     // Insert soft hyphens AFTER pagination and anchor detection
     _pageHtmls = _pageHtmls.map((h) => _hyphenateHtml(h)).toList();
 
-    pages = _pageHtmls.map((pageHtml) {
-      return _HighlightablePage(
-        pageHtml: pageHtml,
-        pageWidth: pageSize.width - 20.w,
-        chapterTitle: widget.chapterTitle,
-        style: widget.style,
-        rawFontFamily: widget.rawFontFamily,
-        bookId: widget.bookId,
-        chapterIndex: widget.chapterIndex,
-        accentColor: widget.accentColor,
-        backgroundColor: widget.backgroundColor,
-        onTextTap: widget.onTextTap,
-        searchQuery: widget.searchQuery,
-      );
-    }).toList();
+    final fragments = _pageHtmls;
+    final indexed = <int, String>{
+      for (var i = 0; i < fragments.length; i++) i: fragments[i]
+    };
+    pages = indexed.entries
+        .map((e) => _HighlightablePage(
+              key: ValueKey('page_${widget.chapterIndex}_${e.key}'),
+              pageHtml: e.value,
+              pageWidth: pageSize.width - 20.w,
+              chapterTitle: widget.chapterTitle,
+              style: widget.style,
+              rawFontFamily: widget.rawFontFamily,
+              bookId: widget.bookId,
+              chapterIndex: widget.chapterIndex,
+              accentColor: widget.accentColor,
+              backgroundColor: widget.backgroundColor,
+              onTextTap: widget.onTextTap,
+              searchQuery: widget.searchQuery,
+            ))
+        .toList();
   }
 
   /// Find which page contains text content near an anchor element, when the
@@ -407,6 +412,7 @@ class _HighlightablePage extends StatefulWidget {
   final String? searchQuery;
 
   const _HighlightablePage({
+    super.key,
     required this.pageHtml,
     required this.pageWidth,
     this.chapterTitle = '',
@@ -504,7 +510,8 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   }
 
   ({int start, int end, String cleanSelected})? _resolveSelectionRange(
-      String selectedText) {
+      String selectedText,
+      {String? cleanText}) {
     final cleanSelected = selectedText
         .replaceAll('\u00AD', '')
         .replaceAll('-\n', '')
@@ -513,7 +520,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
         .trim();
     if (cleanSelected.isEmpty) return null;
 
-    final builtText = _lastBuilder?.lastBuiltCleanText ?? '';
+    final builtText = cleanText ?? _lastBuilder?.lastBuiltCleanText ?? '';
 
     final searchText = cleanSelected.replaceAll('-', '');
     final searchStart = _tappedParagraphEnd > 0 ? _tappedParagraphStart : 0;
@@ -560,6 +567,11 @@ class _HighlightablePageState extends State<_HighlightablePage> {
   void _takeNote() {
     if (_lastSelectedText.isEmpty || widget.bookId.isEmpty) return;
 
+    final selectedText = _lastSelectedText;
+    final builderCleanText = _lastBuilder?.lastBuiltCleanText ?? '';
+    final chapterIndex = widget.chapterIndex;
+    final bookId = widget.bookId;
+
     showDialog<String?>(
       context: context,
       builder: (ctx) {
@@ -574,7 +586,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _lastSelectedText,
+                    selectedText,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontStyle: FontStyle.italic,
@@ -616,16 +628,23 @@ class _HighlightablePageState extends State<_HighlightablePage> {
     ).then((result) {
       if (result == null || result.trim().isEmpty) return;
 
-      final range = _resolveSelectionRange(_lastSelectedText);
-      if (range == null) return;
+      final range =
+          _resolveSelectionRange(selectedText, cleanText: builderCleanText);
+      if (range == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not anchor note here')),
+          );
+        }
+        return;
+      }
 
-      final builtText = _lastBuilder?.lastBuiltCleanText ?? '';
-      final pKey = HighlightModel.makeParagraphKey(builtText);
+      final pKey = HighlightModel.makeParagraphKey(builderCleanText);
 
       final highlight = HighlightModel(
         id: HighlightModel.generateId(),
-        bookId: widget.bookId,
-        chapterIndex: widget.chapterIndex,
+        bookId: bookId,
+        chapterIndex: chapterIndex,
         paragraphKey: pKey,
         startIndex: range.start,
         endIndex: range.end,

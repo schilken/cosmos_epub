@@ -178,6 +178,7 @@ class HtmlTextBuilder {
               endIndex: (h.endIndex - blockStart).clamp(0, blockLen),
               selectedText: h.selectedText,
               colorValue: h.colorValue,
+              noteText: h.noteText,
             ))
         .toList();
   }
