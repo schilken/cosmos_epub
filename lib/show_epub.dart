@@ -610,36 +610,23 @@ class ShowEpubState extends State<ShowEpub> {
           continue;
         }
 
-        final elements = body.querySelectorAll('*');
-        bool loggedSample = false;
-        for (final el in elements) {
-          final elText = el.text.trim();
-          if (elText.length < 3) continue;
-          final elKey = HighlightModel.makeParagraphKey(elText);
-          if (elKey == note.paragraphKey) {
-            log('  page $i: FOUND by paragraphKey ($elKey), returning $i');
-            return i;
-          }
-          if (!loggedSample && elText.length > 20) {
-            log('  page $i sample: tag=<${el.localName}> key=$elKey len=${elText.length} text20="${elText.substring(0, elText.length > 20 ? 20 : elText.length)}"');
-            loggedSample = true;
-          }
+        final toRemove =
+            body.querySelectorAll('script, style, head, meta, link, title');
+        for (final el in toRemove) {
+          el.remove();
         }
-        log('  page $i: done checking elements, targetKey=${note.paragraphKey}');
 
         final pageText = body.text;
+        final pageKey = HighlightModel.makeParagraphKey(pageText);
+        if (pageKey == note.paragraphKey) {
+          log('  page $i: FOUND by pageKey ($pageKey), returning $i');
+          return i;
+        }
+
         final found = pageText.contains(note.selectedText);
-        log('  page $i: textLen=${pageText.length} matched=$found');
+        log('  page $i: pageKey=$pageKey textLen=${pageText.length} selectedFound=$found');
         if (found) {
           log('  → returning page $i (selectedText fallback)');
-          for (final el in elements) {
-            final elText = el.text.trim();
-            if (elText.length < 3) continue;
-            if (elText.contains(note.selectedText)) {
-              final elKey = HighlightModel.makeParagraphKey(elText);
-              log('  matched element: tag=<${el.localName}> key=$elKey len=${elText.length}');
-            }
-          }
           return i;
         }
       } catch (e) {
@@ -647,7 +634,7 @@ class ShowEpubState extends State<ShowEpub> {
         continue;
       }
     }
-    log('  → NOT FOUND in any page, fallback to 0');
+    log('  → NOT FOUND, fallback to 0');
     return 0;
   }
 
