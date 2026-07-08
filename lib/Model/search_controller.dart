@@ -16,11 +16,13 @@ class EpubSearchController extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isActive = false;
+  String? _lastQuery;
 
   List<SearchResult> get results => _results;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isActive => _isActive;
+  String? get query => _lastQuery;
 
   set isActive(bool value) {
     _isActive = value;
@@ -36,16 +38,18 @@ class EpubSearchController extends ChangeNotifier {
       _errorMessage = 'Please enter a search term';
       _results = [];
       _isLoading = false;
+      _lastQuery = null;
       notifyListeners();
       return;
     }
 
+    _lastQuery = query.trim();
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     Future.delayed(const Duration(milliseconds: 10), () {
-      _results = _searchService.searchAllChapters(_chapters, query.trim());
+      _results = _searchService.searchAllChapters(_chapters, _lastQuery!);
       _isLoading = false;
       notifyListeners();
     });
@@ -68,6 +72,8 @@ class EpubSearchController extends ChangeNotifier {
         _isActive = false;
       }
     }
+    final queryKey = '${key}_query';
+    _lastQuery = gs.read<String>(queryKey);
   }
 
   void saveToStorage(String bookId) {
@@ -75,6 +81,12 @@ class EpubSearchController extends ChangeNotifier {
     final key = '$libSearchPrefix$bookId';
     final encoded = jsonEncode(_results.map((r) => r.toJson()).toList());
     gs.write(key, encoded);
+    final queryKey = '${key}_query';
+    if (_lastQuery != null) {
+      gs.write(queryKey, _lastQuery);
+    } else {
+      gs.remove(queryKey);
+    }
   }
 
   void clear() {
@@ -82,6 +94,7 @@ class EpubSearchController extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _isActive = false;
+    _lastQuery = null;
     notifyListeners();
   }
 
@@ -89,5 +102,6 @@ class EpubSearchController extends ChangeNotifier {
     final gs = GetStorage();
     final key = '$libSearchPrefix$bookId';
     gs.remove(key);
+    gs.remove('${key}_query');
   }
 }

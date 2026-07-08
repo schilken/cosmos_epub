@@ -577,7 +577,8 @@ class ShowEpubState extends State<ShowEpub> {
 
     if (chapterIndex == _currentChapterIndex) {
       final fragments = controllerPaging.pageHtmlFragments;
-      final pageIndex = findPageContainingMatch(fragments, result.matchedText);
+      final pageIndex = findPageContainingMatch(
+          fragments, result.matchStart, result.matchEnd);
       final effectivePage = pageIndex == -1 ? 0 : pageIndex;
       jumpToChapter(chapterIndex, effectivePage);
     } else {
@@ -588,8 +589,8 @@ class ShowEpubState extends State<ShowEpub> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final fragments = controllerPaging.pageHtmlFragments;
-          final pageIndex =
-              findPageContainingMatch(fragments, result.matchedText);
+          final pageIndex = findPageContainingMatch(
+              fragments, result.matchStart, result.matchEnd);
           final effectivePage = pageIndex == -1 ? 0 : pageIndex;
           jumpToChapter(chapterIndex, effectivePage);
         });
@@ -692,6 +693,10 @@ class ShowEpubState extends State<ShowEpub> {
                                           starterPageIndex: _currentPageIndex,
                                           pendingJumpPageIndex:
                                               _pendingJumpPageIndex,
+                                          searchQuery:
+                                              _searchController.isActive
+                                                  ? _searchController.query
+                                                  : null,
                                           anchorFragment:
                                               chaptersList[currentChapterIndex]
                                                   .anchorFragment,

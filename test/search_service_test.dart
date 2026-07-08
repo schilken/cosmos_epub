@@ -373,100 +373,131 @@ void main() {
       expect(beforeLen, lessThanOrEqualTo(105));
       expect(afterLen, lessThanOrEqualTo(105));
     });
+    test('chapters with identical HTML produce results only once', () {
+      final chapters = [
+        LocalChapterModel(
+          chapter: 'Chapter 1',
+          htmlContent:
+              '<html><body><p>The needle is in this text.</p></body></html>',
+        ),
+        LocalChapterModel(
+          chapter: 'Section 1.1',
+          htmlContent:
+              '<html><body><p>The needle is in this text.</p></body></html>',
+        ),
+        LocalChapterModel(
+          chapter: 'Section 1.2',
+          htmlContent:
+              '<html><body><p>The needle is in this text.</p></body></html>',
+        ),
+      ];
+
+      final results = service.searchAllChapters(chapters, 'needle');
+      expect(results.length, 1);
+      expect(results.first.chapterIndex, 0);
+    });
+
+    test('chapters with different HTML are still searched', () {
+      final chapters = [
+        LocalChapterModel(
+          chapter: 'Chapter 1',
+          htmlContent: '<html><body><p>First needle here.</p></body></html>',
+        ),
+        LocalChapterModel(
+          chapter: 'Chapter 2',
+          htmlContent: '<html><body><p>Second needle there.</p></body></html>',
+        ),
+      ];
+
+      final results = service.searchAllChapters(chapters, 'needle');
+      expect(results.length, 2);
+      expect(results[0].chapterIndex, 0);
+      expect(results[1].chapterIndex, 1);
+    });
   });
 
   group('findPageContainingMatch', () {
-    test('match in first page returns 0', () {
+    test('match offset in first page returns 0', () {
       final pages = [
         '<p>Find the needle in this haystack.</p>',
         '<p>No match here at all.</p>',
         '<p>Another needle appears again.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 5, 10);
       expect(result, 0);
     });
 
-    test('match in middle page returns correct index', () {
+    test('match offset in middle page returns correct index', () {
       final pages = [
         '<p>Nothing to see here.</p>',
         '<p>Find the needle in this haystack.</p>',
         '<p>Just more text.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 30, 35);
       expect(result, 1);
     });
 
-    test('match in last page returns correct index', () {
+    test('match offset in last page returns correct index', () {
       final pages = [
         '<p>No match here.</p>',
         '<p>Still nothing.</p>',
         '<p>The needle is finally here.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 40, 45);
       expect(result, 2);
     });
 
-    test('match not found returns -1', () {
+    test('matchStart beyond all page text returns -1', () {
       final pages = [
         '<p>Nothing to see here.</p>',
         '<p>Also nothing.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'elephant');
+      final result = findPageContainingMatch(pages, 99999, 100000);
       expect(result, -1);
     });
 
     test('empty pages list returns -1', () {
-      final result = findPageContainingMatch([], 'needle');
+      final result = findPageContainingMatch([], 0, 5);
       expect(result, -1);
     });
 
-    test('empty match text returns -1', () {
-      final pages = ['<p>Some content here.</p>'];
-      final result = findPageContainingMatch(pages, '');
-      expect(result, -1);
-    });
-
-    test('HTML fragments with non-breaking spaces', () {
+    test('HTML fragments with non-breaking spaces count correctly', () {
       final pages = [
         '<p>Hello&nbsp;World this is some text.</p>',
         '<p>Another&nbsp;page&nbsp;with needle here.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 40, 45);
       expect(result, 1);
     });
 
-    test('matches first occurrence when multiple pages have the term', () {
+    test('offset-based matching distinguishes same text in different pages',
+        () {
       final pages = [
         '<p>First page no match.</p>',
         '<p>Needle in the second page.</p>',
         '<p>Needle also in the third page.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'Needle');
-      expect(result, 1);
+      final secondPageResult = findPageContainingMatch(pages, 25, 30);
+      expect(secondPageResult, 1);
+
+      final thirdPageResult = findPageContainingMatch(pages, 55, 60);
+      expect(thirdPageResult, 2);
     });
 
-    test('case-insensitive matching', () {
-      final pages = [
-        '<p>Find the NEEDLE here.</p>',
-      ];
-      final result = findPageContainingMatch(pages, 'needle');
-      expect(result, 0);
-    });
-
-    test('page with unparseable HTML is skipped', () {
+    test('page with unparseable HTML still accumulates correctly', () {
       final pages = [
         '<p>Fine page with needle.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 5, 10);
       expect(result, 0);
     });
 
-    test('page with only whitespace is skipped', () {
+    test('pages with whitespace-only content are skipped correctly', () {
       final pages = [
         '<p>   </p>',
         '<p>No target term in this content.</p>',
       ];
-      final result = findPageContainingMatch(pages, 'needle');
+      final result = findPageContainingMatch(pages, 99999, 100000);
       expect(result, -1);
     });
   });

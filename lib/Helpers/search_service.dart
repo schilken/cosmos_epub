@@ -11,9 +11,15 @@ class SearchService {
 
     final results = <SearchResult>[];
     final lowerQuery = query.toLowerCase();
+    final seenContentHashes = <int>{};
 
     for (var chapterIdx = 0; chapterIdx < chapters.length; chapterIdx++) {
       final chapter = chapters[chapterIdx];
+
+      final contentHash = chapter.htmlContent.hashCode;
+      if (seenContentHashes.contains(contentHash)) continue;
+      seenContentHashes.add(contentHash);
+
       try {
         final doc = html_parser.parse(chapter.htmlContent);
         final body = doc.body ?? doc.documentElement;
@@ -138,10 +144,11 @@ class SearchService {
   }
 }
 
-int findPageContainingMatch(List<String> pageHtmlFragments, String matchText) {
-  if (pageHtmlFragments.isEmpty || matchText.isEmpty) return -1;
+int findPageContainingMatch(
+    List<String> pageHtmlFragments, int matchStart, int matchEnd) {
+  if (pageHtmlFragments.isEmpty) return -1;
 
-  final query = matchText.toLowerCase();
+  var accumulatedChars = 0;
 
   for (var i = 0; i < pageHtmlFragments.length; i++) {
     try {
@@ -152,9 +159,17 @@ int findPageContainingMatch(List<String> pageHtmlFragments, String matchText) {
       SearchService._removeNonContentElements(body);
 
       final text = body.text;
-      if (text.isEmpty) continue;
+      if (text.isEmpty) {
+        continue;
+      }
 
-      if (text.toLowerCase().contains(query)) return i;
+      final pageStart = accumulatedChars;
+      final pageEnd = accumulatedChars + text.length;
+      accumulatedChars = pageEnd;
+
+      if (matchStart >= pageStart && matchStart < pageEnd) {
+        return i;
+      }
     } catch (_) {
       continue;
     }

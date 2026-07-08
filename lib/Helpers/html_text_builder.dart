@@ -26,6 +26,10 @@ class HtmlTextBuilder {
   /// value so highlight offsets and the page key text stay identical.
   final double? maxWidth;
 
+  /// When non-null, all occurrences of this text are rendered in bold
+  /// (case-insensitive, exact match). Used by search result highlighting.
+  final String? searchQuery;
+
   /// Cumulative offset tracking across blocks for highlight matching.
   int _pageOffset = 0;
   final StringBuffer _pageTextBuf = StringBuffer();
@@ -45,6 +49,7 @@ class HtmlTextBuilder {
     this.onHighlightChanged,
     this.onParagraphTapped,
     this.maxWidth,
+    this.searchQuery,
   });
 
   TextStyle get _baseStyle => TextStyle(
@@ -131,7 +136,8 @@ class HtmlTextBuilder {
       } else if (child is html_dom.Text) {
         final text = child.text.trim();
         if (text.isNotEmpty) {
-          final span = TextSpan(text: text, style: _baseStyle);
+          final searchSpans = _buildSearchSpans(text, _baseStyle);
+          final span = TextSpan(children: searchSpans, style: _baseStyle);
           final blockClean = text.replaceAll('\u00AD', '');
           final blockStart = _pageOffset;
           _pageOffset += blockClean.length;
@@ -181,7 +187,7 @@ class HtmlTextBuilder {
     for (final child in node.nodes) {
       if (child is html_dom.Text) {
         final text = child.text;
-        if (text.isNotEmpty) spans.add(TextSpan(text: text, style: style));
+        if (text.isNotEmpty) spans.addAll(_buildSearchSpans(text, style));
       } else if (child is html_dom.Element) {
         final tag = child.localName?.toLowerCase() ?? '';
         if (tag == 'br') {
@@ -216,6 +222,52 @@ class HtmlTextBuilder {
       default:
         return base;
     }
+  }
+
+  List<InlineSpan> _buildSearchSpans(String text, TextStyle style) {
+    final query = searchQuery;
+    if (query == null || query.isEmpty) {
+      return [TextSpan(text: text, style: style)];
+    }
+
+    const shy = '\u00AD';
+    final buffer = StringBuffer();
+    for (int i = 0; i < query.length; i++) {
+      if (i > 0) buffer.write('$shy?');
+      buffer.write(RegExp.escape(query[i]));
+    }
+    final regex = RegExp(buffer.toString(), caseSensitive: false);
+
+    final matches = regex.allMatches(text).toList();
+    if (matches.isEmpty) {
+      return [TextSpan(text: text, style: style)];
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: style,
+        ));
+      }
+      spans.add(TextSpan(
+        text: text.substring(match.start, match.end),
+        style: style.copyWith(fontWeight: FontWeight.bold),
+      ));
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: style,
+      ));
+    }
+
+    return spans;
   }
 
   TextStyle _styleForTag(String tag) {

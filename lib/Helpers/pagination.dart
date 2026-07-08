@@ -142,6 +142,7 @@ class PagingWidget extends StatefulWidget {
   final Widget? lastWidget;
   final String? anchorFragment;
   final int? pendingJumpPageIndex;
+  final String? searchQuery;
 
   const PagingWidget({
     super.key,
@@ -167,6 +168,7 @@ class PagingWidget extends StatefulWidget {
     this.lastWidget,
     this.anchorFragment,
     this.pendingJumpPageIndex,
+    this.searchQuery,
   });
 
   @override
@@ -278,6 +280,7 @@ class _PagingWidgetState extends State<PagingWidget> {
         accentColor: widget.accentColor,
         backgroundColor: widget.backgroundColor,
         onTextTap: widget.onTextTap,
+        searchQuery: widget.searchQuery,
       );
     }).toList();
   }
@@ -401,6 +404,7 @@ class _HighlightablePage extends StatefulWidget {
   final Color accentColor;
   final Color backgroundColor;
   final VoidCallback onTextTap;
+  final String? searchQuery;
 
   const _HighlightablePage({
     required this.pageHtml,
@@ -413,6 +417,7 @@ class _HighlightablePage extends StatefulWidget {
     this.accentColor = Colors.indigoAccent,
     this.backgroundColor = Colors.white,
     required this.onTextTap,
+    this.searchQuery,
   });
 
   @override
@@ -440,6 +445,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       accentColor: widget.accentColor,
       onTextTap: widget.onTextTap,
       maxWidth: tableMaxWidth,
+      searchQuery: widget.searchQuery,
     );
     tempBuilder.build(widget.pageHtml);
     final pageKey =
@@ -460,6 +466,7 @@ class _HighlightablePageState extends State<_HighlightablePage> {
       onTextTap: widget.onTextTap,
       maxWidth: tableMaxWidth,
       highlights: pageHighlights,
+      searchQuery: widget.searchQuery,
       onParagraphTapped: (start, end) {
         _tappedParagraphStart = start;
         _tappedParagraphEnd = end;
