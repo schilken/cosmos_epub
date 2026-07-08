@@ -611,7 +611,7 @@ class ShowEpubState extends State<ShowEpub> {
         }
 
         final elements = body.querySelectorAll('*');
-        log('  page $i: checking ${elements.length} elements for paragraphKey match');
+        bool loggedSample = false;
         for (final el in elements) {
           final elText = el.text.trim();
           if (elText.length < 3) continue;
@@ -620,13 +620,26 @@ class ShowEpubState extends State<ShowEpub> {
             log('  page $i: FOUND by paragraphKey ($elKey), returning $i');
             return i;
           }
+          if (!loggedSample && elText.length > 20) {
+            log('  page $i sample: tag=<${el.localName}> key=$elKey len=${elText.length} text20="${elText.substring(0, elText.length > 20 ? 20 : elText.length)}"');
+            loggedSample = true;
+          }
         }
+        log('  page $i: done checking elements, targetKey=${note.paragraphKey}');
 
         final pageText = body.text;
         final found = pageText.contains(note.selectedText);
         log('  page $i: textLen=${pageText.length} matched=$found');
         if (found) {
           log('  → returning page $i (selectedText fallback)');
+          for (final el in elements) {
+            final elText = el.text.trim();
+            if (elText.length < 3) continue;
+            if (elText.contains(note.selectedText)) {
+              final elKey = HighlightModel.makeParagraphKey(elText);
+              log('  matched element: tag=<${el.localName}> key=$elKey len=${elText.length}');
+            }
+          }
           return i;
         }
       } catch (e) {
